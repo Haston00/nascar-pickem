@@ -172,10 +172,9 @@
             const picksByPlayer = {};
             picks.forEach(pick => {
               console.log("Processing pick for race", raceName, ":", pick);
-              const player = pick.player ? pick.player.trim().toLowerCase() : "";
-              const playerKey = players.find(p => p.toLowerCase() === player);
-              if (playerKey) {
-                picksByPlayer[playerKey] = pick;
+              const player = pick.player ? pick.player.trim() : "";
+              if (player && players.includes(player)) {
+                picksByPlayer[player] = pick;
               }
             });
 
@@ -185,7 +184,7 @@
               console.log("Rendering pick for player", player, "in race", raceName, ":", pick);
               row.insertCell().innerText = pick ? (pick.driver || "N/A") : "N/A";
               const finishCell = row.insertCell();
-              finishCell.innerText = pick && pick.finish !== undefined ? pick.finish : "N/A";
+              finishCell.innerText = pick && pick.finish ? pick.finish : "N/A";
               if (pick && (pick.winner === true || pick.winner === "Yes")) {
                 finishCell.className = "winner";
               }
@@ -193,17 +192,16 @@
 
             // Update wins and finishes for standings/averages
             picks.forEach(pick => {
-              const player = pick.player ? pick.player.trim().toLowerCase() : "";
-              const playerKey = players.find(p => p.toLowerCase() === player);
-              if (playerKey) {
+              const player = pick.player ? pick.player.trim() : "";
+              if (players.includes(player)) {
                 if (pick.winner) {
-                  wins[playerKey]++;
+                  wins[player]++;
                 }
                 if (pick.finish && pick.finish !== "TBD" && pick.finish !== "N/A") {
                   const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
                   if (!isNaN(finishNum)) {
-                    finishes[playerKey] = finishes[playerKey] || [];
-                    finishes[playerKey].push(finishNum);
+                    finishes[player] = finishes[player] || [];
+                    finishes[player].push(finishNum);
                   }
                 }
               }
