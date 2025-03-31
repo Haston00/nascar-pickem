@@ -22,7 +22,7 @@
   </div>
   <div id="pool" style="display:none;">
     <h2>Current Race: <span id="raceName">Loading...</span></h2>
-    <table id="picksTable">
+    🙂<table id="picksTable">
       <tr><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>
     </table>
     <h3>Season Standings</h3>
@@ -117,7 +117,7 @@
           }
         } else {
           console.error("Current race document does not exist");
-          document.getElementById("raceName").innerText = "Error: Race not found";
+          document.getElementById("raceName").innerText = "No current race available";
         }
       }).catch((error) => {
         console.error("Error fetching current race:", error);
@@ -146,11 +146,19 @@
         while (table.rows.length > 1) {
           table.deleteRow(1);
         }
+        // Collect all players and their averages
+        const players = [];
         query.forEach((doc) => {
           const data = doc.data();
+          players.push({ player: doc.id, average: parseFloat(data.average) });
+        });
+        // Sort players by average finish (ascending: best to worst)
+        players.sort((a, b) => a.average - b.average);
+        // Add sorted players to the table
+        players.forEach(player => {
           const row = table.insertRow();
-          row.insertCell().innerText = doc.id;
-          row.insertCell().innerText = data.average.toFixed(2);
+          row.insertCell().innerText = player.player;
+          row.insertCell().innerText = player.average.toFixed(2);
         });
       });
 
@@ -164,8 +172,8 @@
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            const raceName = data.raceName || doc.id || "Unknown Race"; // Use raceName, fallback to doc.id
             console.log("Race document:", doc.id, data); // Debug logging
+            const raceName = data.raceName || doc.id; // Use raceName, fallback to doc.id
             const picks = data.picks;
             const row = table.insertRow();
 
@@ -198,7 +206,7 @@
               row.insertCell().innerText = pick.driver;
               const finishCell = row.insertCell();
               finishCell.innerText = pick.finish;
-              if (pick.winner) {
+              if (pick.winner === true || pick.winner === "Yes") {
                 finishCell.className = "winner";
               }
             });
