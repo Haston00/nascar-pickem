@@ -163,7 +163,7 @@
           if (doc.id !== "current") {
             const data = doc.data();
             const raceName = data.raceName || doc.id;
-            const picks = data.picks;
+            const picks = data.picks || [];
             const row = table.insertRow();
             row.insertCell().innerText = raceName;
 
@@ -174,22 +174,23 @@
             });
 
             // Fill in picks for each player
-            if (picks && Array.isArray(picks)) {
+            if (Array.isArray(picks)) {
               picks.forEach(pick => {
-                if (players.includes(pick.player)) {
-                  playerPicks[pick.player] = {
+                const player = pick.player;
+                if (players.includes(player)) {
+                  playerPicks[player] = {
                     driver: pick.driver || "N/A",
                     finish: pick.finish || "TBD",
                     winner: pick.winner || false
                   };
                   // Update wins and finishes for standings/averages
                   if (pick.winner) {
-                    wins[pick.player]++;
+                    wins[player]++;
                   }
                   if (pick.finish && pick.finish !== "TBD") {
                     const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
                     if (!isNaN(finishNum)) {
-                      finishes[pick.player].push(finishNum);
+                      finishes[player].push(finishNum);
                     }
                   }
                 }
@@ -214,7 +215,6 @@
         while (standingsTable.rows.length > 1) {
           standingsTable.deleteRow(1);
         }
-        // Sort players by wins (descending)
         const sortedPlayers = players.sort((a, b) => wins[b] - wins[a]);
         sortedPlayers.forEach(player => {
           const row = standingsTable.insertRow();
@@ -227,7 +227,6 @@
         while (averageTable.rows.length > 1) {
           averageTable.deleteRow(1);
         }
-        // Calculate and sort averages
         const averages = {};
         players.forEach(player => {
           if (finishes[player].length > 0) {
@@ -237,7 +236,6 @@
             averages[player] = 0;
           }
         });
-        // Sort players by average finish (ascending)
         const sortedByAverage = players.sort((a, b) => averages[a] - averages[b]);
         sortedByAverage.forEach(player => {
           const row = averageTable.insertRow();
