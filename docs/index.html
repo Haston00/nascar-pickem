@@ -163,7 +163,7 @@
           if (doc.id !== "current") {
             const data = doc.data();
             const raceName = data.raceName || doc.id;
-            const picks = Array.isArray(data.picks) ? data.picks : [];
+            const picks = Array.isArray(data.picks) ? Array.from(data.picks) : [];
             console.log("Race:", raceName, "Picks:", picks);
             const row = table.insertRow();
             row.insertCell().innerText = raceName;
@@ -175,6 +175,8 @@
               const player = pick.player ? pick.player.trim() : "";
               if (player && players.includes(player)) {
                 picksByPlayer[player] = pick;
+              } else {
+                console.log("Player", player, "not found in players array:", players);
               }
             });
 
