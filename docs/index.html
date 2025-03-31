@@ -164,27 +164,36 @@
             const data = doc.data();
             const raceName = data.raceName || doc.id;
             const picks = Array.isArray(data.picks) ? Array.from(data.picks) : [];
-            console.log("Race:", raceName, "Picks:", picks);
+            console.log("Race:", raceName, "Raw picks data:", data.picks);
+            console.log("Processed picks array:", picks);
             const row = table.insertRow();
             row.insertCell().innerText = raceName;
 
             // Create a map of picks by player
             const picksByPlayer = {};
-            picks.forEach(pick => {
-              console.log("Processing pick for race", raceName, ":", pick);
+            picks.forEach((pick, index) => {
+              console.log(`Pick at index ${index} for race ${raceName}:`, pick);
               const player = pick.player ? pick.player.trim() : "";
+              console.log(`Player after trim: "${player}"`);
               if (player && players.includes(player)) {
+                console.log(`Player ${player} matches players array:`, players);
                 picksByPlayer[player] = pick;
               } else {
-                console.log("Player", player, "not found in players array:", players);
+                console.log(`Player "${player}" does not match any in players array:`, players);
               }
             });
+
+            // Log the final picksByPlayer map
+            console.log("Final picksByPlayer for race", raceName, ":", picksByPlayer);
 
             // Add cells for each player (driver, finish)
             players.forEach(player => {
               const pick = picksByPlayer[player];
-              console.log("Rendering pick for player", player, "in race", raceName, ":", pick);
-              row.insertCell().innerText = pick ? (pick.driver || "N/A") : "N/A";
+              console.log(`Rendering pick for player ${player} in race ${raceName}:`, pick);
+              if (pick) {
+                console.log(`Pick details for ${player}: driver=${pick.driver}, finish=${pick.finish}, winner=${pick.winner}`);
+              }
+              row.insertCell().innerText = pick && pick.driver ? pick.driver : "N/A";
               const finishCell = row.insertCell();
               finishCell.innerText = pick && pick.finish ? pick.finish : "N/A";
               if (pick && (pick.winner === true || pick.winner === "Yes")) {
