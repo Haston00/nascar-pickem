@@ -162,12 +162,12 @@
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            const raceName = data.raceName || doc.id;
+            const raceName = data.raceName ? data.raceName.trim().toLowerCase() : doc.id.toLowerCase();
             const picks = Array.isArray(data.picks) ? Array.from(data.picks) : [];
             console.log("Race:", raceName, "Raw picks data:", data.picks);
             console.log("Processed picks array:", picks);
             const row = table.insertRow();
-            row.insertCell().innerText = raceName;
+            row.insertCell().innerText = data.raceName || doc.id;
 
             // Create a map of picks by player
             const picksByPlayer = {};
@@ -193,8 +193,15 @@
               if (pick) {
                 console.log(`Pick details for ${player}:`, pick);
                 // Check for different case variations of the finish field
-                const finishValue = (raceName === "Ambetter 400 Atlanta" && player === "Pop") ? "7th" : (pick.finish || pick.Finish || pick.FINISH || "N/A");
+                let finishValue = pick.finish || pick.Finish || pick.FINISH;
                 console.log(`Possible finish fields for ${player}: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
+                // Hardcode Pop's finish for Ambetter 400 Atlanta
+                if (raceName === "ambetter 400 atlanta" && player === "Pop") {
+                  finishValue = "7th";
+                  console.log(`Hardcoding finish for Pop in Ambetter 400 Atlanta to: 7th`);
+                } else {
+                  finishValue = finishValue || "N/A";
+                }
                 console.log(`Selected finish value for ${player}:`, finishValue);
                 row.insertCell().innerText = pick.driver || "N/A";
                 const finishCell = row.insertCell();
@@ -216,7 +223,7 @@
                 if (pick.winner) {
                   wins[player]++;
                 }
-                const finishValue = (raceName === "Ambetter 400 Atlanta" && player === "Pop") ? "7th" : (pick.finish || pick.Finish || pick.FINISH);
+                let finishValue = (raceName === "ambetter 400 atlanta" && player === "Pop") ? "7th" : (pick.finish || pick.Finish || pick.FINISH);
                 if (finishValue && finishValue !== "TBD" && finishValue !== "N/A") {
                   const finishNum = parseInt(finishValue.replace(/\D/g, '')); // Extract number from "7th"
                   if (!isNaN(finishNum)) {
