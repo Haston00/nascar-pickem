@@ -191,13 +191,21 @@
               const pick = picksByPlayer[player];
               console.log(`Rendering pick for player ${player} in race ${raceName}:`, pick);
               if (pick) {
-                console.log(`Pick details for ${player}: driver=${pick.driver}, finish=${pick.finish}, winner=${pick.winner}`);
-              }
-              row.insertCell().innerText = pick && pick.driver ? pick.driver : "N/A";
-              const finishCell = row.insertCell();
-              finishCell.innerText = pick && pick.finish ? pick.finish : "N/A";
-              if (pick && (pick.winner === true || pick.winner === "Yes")) {
-                finishCell.className = "winner";
+                console.log(`Pick details for ${player}:`, pick);
+                console.log(`Possible finish fields: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
+                // Try different case variations of the finish field
+                const finishValue = pick.finish || pick.Finish || pick.FINISH || "N/A";
+                console.log(`Selected finish value for ${player}:`, finishValue);
+                row.insertCell().innerText = pick.driver || "N/A";
+                const finishCell = row.insertCell();
+                finishCell.innerText = finishValue;
+                if (pick.winner === true || pick.winner === "Yes") {
+                  finishCell.className = "winner";
+                }
+              } else {
+                row.insertCell().innerText = "N/A";
+                const finishCell = row.insertCell();
+                finishCell.innerText = "N/A";
               }
             });
 
@@ -208,8 +216,9 @@
                 if (pick.winner) {
                   wins[player]++;
                 }
-                if (pick.finish && pick.finish !== "TBD" && pick.finish !== "N/A") {
-                  const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
+                const finishValue = pick.finish || pick.Finish || pick.FINISH;
+                if (finishValue && finishValue !== "TBD" && finishValue !== "N/A") {
+                  const finishNum = parseInt(finishValue.replace(/\D/g, '')); // Extract number from "7th"
                   if (!isNaN(finishNum)) {
                     finishes[player] = finishes[player] || [];
                     finishes[player].push(finishNum);
