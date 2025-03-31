@@ -22,7 +22,7 @@
   </div>
   <div id="pool" style="display:none;">
     <h2>Current Race: <span id="raceName">Loading...</span></h2>
-    🙂<table id="picksTable">
+    <table id="picksTable">
       <tr><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>
     </table>
     <h3>Season Standings</h3>
@@ -43,7 +43,7 @@
         <th>Finish</th>
         <th>Greg</th>
         <th>Finish</th>
-        <th>Matt</th>
+        <th>Matty</th>
         <th>Finish</th>
         <th>Brandon</th>
         <th>Finish</th>
@@ -180,8 +180,8 @@
             // Race name
             row.insertCell().innerText = raceName;
 
-            // Initialize cells for each player (Pop, Mom, Greg, Matt, Brandon)
-            const players = ["Pop", "Mom", "Greg", "Matt", "Brandon"];
+            // Initialize cells for each player (Pop, Mom, Greg, Matty, Brandon)
+            const players = ["Pop", "Mom", "Greg", "Matty", "Brandon"];
             const playerPicks = {};
             players.forEach(player => {
               playerPicks[player] = { driver: "N/A", finish: "N/A", winner: false };
