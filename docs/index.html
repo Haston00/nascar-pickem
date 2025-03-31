@@ -176,6 +176,7 @@
             // Fill in picks for each player
             if (Array.isArray(picks)) {
               picks.forEach(pick => {
+                console.log("Processing pick:", pick); // Debug log
                 const player = pick.player;
                 if (players.includes(player)) {
                   playerPicks[player] = {
@@ -195,6 +196,8 @@
                   }
                 }
               });
+            } else {
+              console.error("Picks is not an array for race", raceName, ":", picks);
             }
 
             // Add cells for each player (driver, finish)
