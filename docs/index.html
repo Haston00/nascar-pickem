@@ -117,7 +117,6 @@
           const data = doc.data();
           document.getElementById("raceName").innerText = data.raceName || "Unknown Race";
           const table = document.getElementById("picksTable");
-          // Clear existing rows (except header)
           while (table.rows.length > 1) {
             table.deleteRow(1);
           }
@@ -143,64 +142,32 @@
         document.getElementById("raceName").innerText = "Error: Failed to load race";
       });
 
-      // Standings
-      db.collection("standings").orderBy("wins", "desc").get().then((query) => {
-        const table = document.getElementById("standingsTable");
-        // Clear existing rows (except header)
-        while (table.rows.length > 1) {
-          table.deleteRow(1);
-        }
-        query.forEach((doc) => {
-          const data = doc.data();
-          const row = table.insertRow();
-          row.insertCell().innerText = doc.id;
-          row.insertCell().innerText = data.wins;
-        });
-      });
-
-      // Average Finishes
-      db.collection("averages").get().then((query) => {
-        const table = document.getElementById("averageTable");
-        // Clear existing rows (except header)
-        while (table.rows.length > 1) {
-          table.deleteRow(1);
-        }
-        // Collect all players and their averages
-        const players = [];
-        query.forEach((doc) => {
-          const data = doc.data();
-          players.push({ player: doc.id, average: parseFloat(data.average) });
-        });
-        // Sort players by average finish (ascending: best to worst)
-        players.sort((a, b) => a.average - b.average);
-        // Add sorted players to the table
-        players.forEach(player => {
-          const row = table.insertRow();
-          row.insertCell().innerText = player.player;
-          row.insertCell().innerText = player.average.toFixed(2);
-        });
-      });
-
-      // Season History
+      // Season History and Calculate Standings/Averages
       db.collection("races").get().then((query) => {
         const table = document.getElementById("historyTable");
-        // Clear existing rows (except header)
         while (table.rows.length > 1) {
           table.deleteRow(1);
         }
+
+        // Initialize data for standings and averages
+        const players = ["Pop", "Mom", "Greg", "Matty", "Brandon"];
+        const wins = {};
+        const finishes = {};
+        players.forEach(player => {
+          wins[player] = 0;
+          finishes[player] = [];
+        });
+
+        // Process each race
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            console.log("Race document:", doc.id, data); // Debug logging
-            const raceName = data.raceName || doc.id; // Use raceName, fallback to doc.id
+            const raceName = data.raceName || doc.id;
             const picks = data.picks;
             const row = table.insertRow();
-
-            // Race name
             row.insertCell().innerText = raceName;
 
-            // Initialize cells for each player (Pop, Mom, Greg, Matty, Brandon)
-            const players = ["Pop", "Mom", "Greg", "Matty", "Brandon"];
+            // Initialize player picks for this race
             const playerPicks = {};
             players.forEach(player => {
               playerPicks[player] = { driver: "N/A", finish: "N/A", winner: false };
@@ -209,14 +176,24 @@
             // Fill in picks for each player
             if (picks && Array.isArray(picks)) {
               picks.forEach(pick => {
-                playerPicks[pick.player] = {
-                  driver: pick.driver,
-                  finish: pick.finish || "TBD",
-                  winner: pick.winner || false
-                };
+                if (players.includes(pick.player)) {
+                  playerPicks[pick.player] = {
+                    driver: pick.driver || "N/A",
+                    finish: pick.finish || "TBD",
+                    winner: pick.winner || false
+                  };
+                  // Update wins and finishes for standings/averages
+                  if (pick.winner) {
+                    wins[pick.player]++;
+                  }
+                  if (pick.finish && pick.finish !== "TBD") {
+                    const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
+                    if (!isNaN(finishNum)) {
+                      finishes[pick.player].push(finishNum);
+                    }
+                  }
+                }
               });
-            } else {
-              console.error("Picks data is missing or not an array for race:", doc.id, picks);
             }
 
             // Add cells for each player (driver, finish)
@@ -230,6 +207,42 @@
               }
             });
           }
+        });
+
+        // Update Season Standings
+        const standingsTable = document.getElementById("standingsTable");
+        while (standingsTable.rows.length > 1) {
+          standingsTable.deleteRow(1);
+        }
+        // Sort players by wins (descending)
+        const sortedPlayers = players.sort((a, b) => wins[b] - wins[a]);
+        sortedPlayers.forEach(player => {
+          const row = standingsTable.insertRow();
+          row.insertCell().innerText = player;
+          row.insertCell().innerText = wins[player];
+        });
+
+        // Update Average Driver Finish
+        const averageTable = document.getElementById("averageTable");
+        while (averageTable.rows.length > 1) {
+          averageTable.deleteRow(1);
+        }
+        // Calculate and sort averages
+        const averages = {};
+        players.forEach(player => {
+          if (finishes[player].length > 0) {
+            const sum = finishes[player].reduce((a, b) => a + b, 0);
+            averages[player] = sum / finishes[player].length;
+          } else {
+            averages[player] = 0;
+          }
+        });
+        // Sort players by average finish (ascending)
+        const sortedByAverage = players.sort((a, b) => averages[a] - averages[b]);
+        sortedByAverage.forEach(player => {
+          const row = averageTable.insertRow();
+          row.insertCell().innerText = player;
+          row.insertCell().innerText = averages[player] ? averages[player].toFixed(2) : "N/A";
         });
       }).catch((error) => {
         console.error("Error fetching season history:", error);
