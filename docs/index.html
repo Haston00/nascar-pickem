@@ -175,16 +175,6 @@
               const player = pick.player;
               if (players.includes(player)) {
                 picksByPlayer[player] = pick;
-                // Update wins and finishes for standings/averages
-                if (pick.winner) {
-                  wins[player]++;
-                }
-                if (pick.finish && pick.finish !== "TBD") {
-                  const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
-                  if (!isNaN(finishNum)) {
-                    finishes[player].push(finishNum);
-                  }
-                }
               }
             });
 
@@ -192,11 +182,27 @@
             players.forEach(player => {
               const pick = picksByPlayer[player] || { driver: "N/A", finish: "N/A", winner: false };
               console.log("Rendering pick for player", player, "in race", raceName, ":", pick);
-              row.insertCell().innerText = pick.driver;
+              row.insertCell().innerText = pick.driver || "N/A";
               const finishCell = row.insertCell();
-              finishCell.innerText = pick.finish;
+              finishCell.innerText = pick.finish || "N/A";
               if (pick.winner === true || pick.winner === "Yes") {
                 finishCell.className = "winner";
+              }
+            });
+
+            // Update wins and finishes for standings/averages
+            picks.forEach(pick => {
+              const player = pick.player;
+              if (players.includes(player)) {
+                if (pick.winner) {
+                  wins[player]++;
+                }
+                if (pick.finish && pick.finish !== "TBD" && pick.finish !== "N/A") {
+                  const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
+                  if (!isNaN(finishNum)) {
+                    finishes[player].push(finishNum);
+                  }
+                }
               }
             });
           }
@@ -211,7 +217,7 @@
         sortedPlayers.forEach(player => {
           const row = standingsTable.insertRow();
           row.insertCell().innerText = player;
-          row.insertCell().innerText = wins[player];
+          row.insertCell().innerText = wins[player] || 0;
         });
 
         // Update Average Driver Finish
@@ -221,7 +227,7 @@
         }
         const averages = {};
         players.forEach(player => {
-          if (finishes[player].length > 0) {
+          if (finishes[player] && finishes[player].length > 0) {
             const sum = finishes[player].reduce((a, b) => a + b, 0);
             averages[player] = sum / finishes[player].length;
           } else {
