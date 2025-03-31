@@ -163,7 +163,7 @@
           if (doc.id !== "current") {
             const data = doc.data();
             const raceName = data.raceName || doc.id;
-            const picks = data.picks || [];
+            const picks = Array.isArray(data.picks) ? data.picks : [];
             console.log("Race:", raceName, "Picks:", picks);
             const row = table.insertRow();
             row.insertCell().innerText = raceName;
@@ -172,39 +172,38 @@
             const picksByPlayer = {};
             picks.forEach(pick => {
               console.log("Processing pick for race", raceName, ":", pick);
-              const player = pick.player;
-              if (players.includes(player)) {
-                picksByPlayer[player] = {
-                  driver: pick.driver || "N/A",
-                  finish: pick.finish || "N/A",
-                  winner: pick.winner || false
-                };
+              const player = pick.player ? pick.player.trim().toLowerCase() : "";
+              const playerKey = players.find(p => p.toLowerCase() === player);
+              if (playerKey) {
+                picksByPlayer[playerKey] = pick;
               }
             });
 
             // Add cells for each player (driver, finish)
             players.forEach(player => {
-              const pick = picksByPlayer[player] || { driver: "N/A", finish: "N/A", winner: false };
+              const pick = picksByPlayer[player];
               console.log("Rendering pick for player", player, "in race", raceName, ":", pick);
-              row.insertCell().innerText = pick.driver;
+              row.insertCell().innerText = pick ? (pick.driver || "N/A") : "N/A";
               const finishCell = row.insertCell();
-              finishCell.innerText = pick.finish;
-              if (pick.winner === true || pick.winner === "Yes") {
+              finishCell.innerText = pick && pick.finish !== undefined ? pick.finish : "N/A";
+              if (pick && (pick.winner === true || pick.winner === "Yes")) {
                 finishCell.className = "winner";
               }
             });
 
             // Update wins and finishes for standings/averages
             picks.forEach(pick => {
-              const player = pick.player;
-              if (players.includes(player)) {
+              const player = pick.player ? pick.player.trim().toLowerCase() : "";
+              const playerKey = players.find(p => p.toLowerCase() === player);
+              if (playerKey) {
                 if (pick.winner) {
-                  wins[player]++;
+                  wins[playerKey]++;
                 }
                 if (pick.finish && pick.finish !== "TBD" && pick.finish !== "N/A") {
                   const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
                   if (!isNaN(finishNum)) {
-                    finishes[player].push(finishNum);
+                    finishes[playerKey] = finishes[playerKey] || [];
+                    finishes[playerKey].push(finishNum);
                   }
                 }
               }
