@@ -164,53 +164,46 @@
             const data = doc.data();
             const raceName = data.raceName || doc.id;
             const picks = data.picks || [];
-            console.log("Race:", raceName, "Picks:", picks); // Debug log for picks array
+            console.log("Race:", raceName, "Picks:", picks);
             const row = table.insertRow();
             row.insertCell().innerText = raceName;
 
-            // Initialize player picks for this race
-            const playerPicks = {};
+            // Create an array to hold the cells for each player (driver, finish)
+            const cells = {};
             players.forEach(player => {
-              playerPicks[player] = { driver: "N/A", finish: "N/A", winner: false };
+              cells[player] = { driver: "N/A", finish: "N/A", winner: false };
             });
 
-            // Fill in picks for each player
-            if (Array.isArray(picks)) {
-              picks.forEach(pick => {
-                console.log("Processing pick for race", raceName, ":", pick); // Debug log for each pick
-                const player = pick.player;
-                if (players.includes(player)) {
-                  playerPicks[player] = {
-                    driver: pick.driver || "N/A",
-                    finish: pick.finish || "TBD",
-                    winner: pick.winner || false
-                  };
-                  // Update wins and finishes for standings/averages
-                  if (pick.winner) {
-                    wins[player]++;
-                  }
-                  if (pick.finish && pick.finish !== "TBD") {
-                    const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
-                    if (!isNaN(finishNum)) {
-                      finishes[player].push(finishNum);
-                    }
+            // Fill in the cells based on picks
+            picks.forEach(pick => {
+              console.log("Processing pick for race", raceName, ":", pick);
+              const player = pick.player;
+              if (players.includes(player)) {
+                cells[player] = {
+                  driver: pick.driver || "N/A",
+                  finish: pick.finish || "TBD",
+                  winner: pick.winner || false
+                };
+                // Update wins and finishes for standings/averages
+                if (pick.winner) {
+                  wins[player]++;
+                }
+                if (pick.finish && pick.finish !== "TBD") {
+                  const finishNum = parseInt(pick.finish.replace(/\D/g, '')); // Extract number from "7th"
+                  if (!isNaN(finishNum)) {
+                    finishes[player].push(finishNum);
                   }
                 }
-              });
-            } else {
-              console.error("Picks is not an array for race", raceName, ":", picks);
-            }
-
-            // Log the playerPicks object before rendering
-            console.log("Player picks for race", raceName, ":", playerPicks);
+              }
+            });
 
             // Add cells for each player (driver, finish)
             players.forEach(player => {
-              const pick = playerPicks[player];
-              row.insertCell().innerText = pick.driver;
+              const cellData = cells[player];
+              row.insertCell().innerText = cellData.driver;
               const finishCell = row.insertCell();
-              finishCell.innerText = pick.finish;
-              if (pick.winner === true || pick.winner === "Yes") {
+              finishCell.innerText = cellData.finish;
+              if (cellData.winner === true || cellData.winner === "Yes") {
                 finishCell.className = "winner";
               }
             });
