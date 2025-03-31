@@ -35,7 +35,24 @@
     </table>
     <h3>Season History</h3>
     <table id="historyTable">
-      <tr><th>Race</th><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>
+      <tr>
+        <th>Race</th>
+        <th>Pop Driver</th>
+        <th>Pop Finish</th>
+        <th>Pop Winner</th>
+        <th>Mom Driver</th>
+        <th>Mom Finish</th>
+        <th>Mom Winner</th>
+        <th>Greg Driver</th>
+        <th>Greg Finish</th>
+        <th>Greg Winner</th>
+        <th>Matt Driver</th>
+        <th>Matt Finish</th>
+        <th>Matt Winner</th>
+        <th>Brandon Driver</th>
+        <th>Brandon Finish</th>
+        <th>Brandon Winner</th>
+      </tr>
     </table>
   </div>
 
@@ -82,22 +99,34 @@
       // Current Race
       db.collection("races").doc("current").get().then((doc) => {
         if (doc.exists) {
+          console.log("Current race data:", doc.data());
           const data = doc.data();
-          document.getElementById("raceName").innerText = data.raceName;
+          document.getElementById("raceName").innerText = data.raceName || "Unknown Race";
           const table = document.getElementById("picksTable");
           // Clear existing rows (except header)
           while (table.rows.length > 1) {
             table.deleteRow(1);
           }
-          data.picks.forEach(pick => {
-            const row = table.insertRow();
-            row.insertCell().innerText = pick.player;
-            row.insertCell().innerText = pick.driver;
-            row.insertCell().innerText = pick.finish || "TBD";
-            row.insertCell().innerText = pick.winner ? "Yes" : "No";
-            if (pick.winner) row.className = "winner";
-          });
+          if (data.picks && Array.isArray(data.picks)) {
+            data.picks.forEach(pick => {
+              const row = table.insertRow();
+              row.insertCell().innerText = pick.player;
+              row.insertCell().innerText = pick.driver;
+              row.insertCell().innerText = pick.finish || "TBD";
+              row.insertCell().innerText = pick.winner ? "Yes" : "No";
+              if (pick.winner) row.className = "winner";
+            });
+          } else {
+            console.error("Picks data is missing or not an array:", data.picks);
+            document.getElementById("raceName").innerText = "Error: Picks data missing";
+          }
+        } else {
+          console.error("Current race document does not exist");
+          document.getElementById("raceName").innerText = "Error: Race not found";
         }
+      }).catch((error) => {
+        console.error("Error fetching current race:", error);
+        document.getElementById("raceName").innerText = "Error: Failed to load race";
       });
 
       // Standings
@@ -140,14 +169,41 @@
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            data.picks.forEach(pick => {
-              const row = table.insertRow();
-              row.insertCell().innerText = data.raceName;
-              row.insertCell().innerText = pick.player;
+            const raceName = data.raceName || "Unknown Race"; // Fallback if raceName is undefined
+            const picks = data.picks;
+            const row = table.insertRow();
+
+            // Race name
+            row.insertCell().innerText = raceName;
+
+            // Initialize cells for each player (Pop, Mom, Greg, Matt, Brandon)
+            const players = ["Pop", "Mom", "Greg", "Matt", "Brandon"];
+            const playerPicks = {};
+            players.forEach(player => {
+              playerPicks[player] = { driver: "N/A", finish: "N/A", winner: "No" };
+            });
+
+            // Fill in picks for each player
+            picks.forEach(pick => {
+              playerPicks[pick.player] = {
+                driver: pick.driver,
+                finish: pick.finish || "TBD",
+                winner: pick.winner ? "Yes" : "No"
+              };
+            });
+
+            // Add cells for each player (driver, finish, winner)
+            players.forEach(player => {
+              const pick = playerPicks[player];
               row.insertCell().innerText = pick.driver;
-              row.insertCell().innerText = pick.finish || "TBD";
-              row.insertCell().innerText = pick.winner ? "Yes" : "No";
-              if (pick.winner) row.cells[4].className = "winner";
+              const finishCell = row.insertCell();
+              finishCell.innerText = pick.finish;
+              const winnerCell = row.insertCell();
+              winnerCell.innerText = pick.winner;
+              if (pick.winner === "Yes") {
+                finishCell.className = "winner";
+                winnerCell.className = "winner";
+              }
             });
           }
         });
