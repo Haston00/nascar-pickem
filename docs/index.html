@@ -192,9 +192,9 @@
               console.log(`Rendering pick for player ${player} in race ${raceName}:`, pick);
               if (pick) {
                 console.log(`Pick details for ${player}:`, pick);
-                console.log(`Possible finish fields: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
-                // Try different case variations of the finish field
+                // Check for different case variations of the finish field
                 const finishValue = pick.finish || pick.Finish || pick.FINISH || "N/A";
+                console.log(`Possible finish fields for ${player}: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
                 console.log(`Selected finish value for ${player}:`, finishValue);
                 row.insertCell().innerText = pick.driver || "N/A";
                 const finishCell = row.insertCell();
