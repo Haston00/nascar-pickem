@@ -164,6 +164,7 @@
             const data = doc.data();
             const raceName = data.raceName || doc.id;
             const picks = data.picks || [];
+            console.log("Race:", raceName, "Picks:", picks); // Debug log for picks array
             const row = table.insertRow();
             row.insertCell().innerText = raceName;
 
@@ -176,7 +177,7 @@
             // Fill in picks for each player
             if (Array.isArray(picks)) {
               picks.forEach(pick => {
-                console.log("Processing pick:", pick); // Debug log
+                console.log("Processing pick for race", raceName, ":", pick); // Debug log for each pick
                 const player = pick.player;
                 if (players.includes(player)) {
                   playerPicks[player] = {
@@ -199,6 +200,9 @@
             } else {
               console.error("Picks is not an array for race", raceName, ":", picks);
             }
+
+            // Log the playerPicks object before rendering
+            console.log("Player picks for race", raceName, ":", playerPicks);
 
             // Add cells for each player (driver, finish)
             players.forEach(player => {
