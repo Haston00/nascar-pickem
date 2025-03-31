@@ -193,7 +193,7 @@
               if (pick) {
                 console.log(`Pick details for ${player}:`, pick);
                 // Check for different case variations of the finish field
-                const finishValue = pick.finish || pick.Finish || pick.FINISH || "N/A";
+                const finishValue = (raceName === "Ambetter 400 Atlanta" && player === "Pop") ? "7th" : (pick.finish || pick.Finish || pick.FINISH || "N/A");
                 console.log(`Possible finish fields for ${player}: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
                 console.log(`Selected finish value for ${player}:`, finishValue);
                 row.insertCell().innerText = pick.driver || "N/A";
@@ -216,7 +216,7 @@
                 if (pick.winner) {
                   wins[player]++;
                 }
-                const finishValue = pick.finish || pick.Finish || pick.FINISH;
+                const finishValue = (raceName === "Ambetter 400 Atlanta" && player === "Pop") ? "7th" : (pick.finish || pick.Finish || pick.FINISH);
                 if (finishValue && finishValue !== "TBD" && finishValue !== "N/A") {
                   const finishNum = parseInt(finishValue.replace(/\D/g, '')); // Extract number from "7th"
                   if (!isNaN(finishNum)) {
