@@ -37,21 +37,16 @@
     <table id="historyTable">
       <tr>
         <th>Race</th>
-        <th>Pop Driver</th>
-        <th>Pop Finish</th>
-        <th>Pop Winner</th>
-        <th>Mom Driver</th>
-        <th>Mom Finish</th>
-        <th>Mom Winner</th>
-        <th>Greg Driver</th>
-        <th>Greg Finish</th>
-        <th>Greg Winner</th>
-        <th>Matt Driver</th>
-        <th>Matt Finish</th>
-        <th>Matt Winner</th>
-        <th>Brandon Driver</th>
-        <th>Brandon Finish</th>
-        <th>Brandon Winner</th>
+        <th>Pop</th>
+        <th>Finish</th>
+        <th>Mom</th>
+        <th>Finish</th>
+        <th>Greg</th>
+        <th>Finish</th>
+        <th>Matt</th>
+        <th>Finish</th>
+        <th>Brandon</th>
+        <th>Finish</th>
       </tr>
     </table>
   </div>
@@ -169,7 +164,8 @@
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            const raceName = data.raceName || "Unknown Race"; // Fallback if raceName is undefined
+            const raceName = data.raceName || doc.id || "Unknown Race"; // Use raceName, fallback to doc.id
+            console.log("Race document:", doc.id, data); // Debug logging
             const picks = data.picks;
             const row = table.insertRow();
 
@@ -180,33 +176,36 @@
             const players = ["Pop", "Mom", "Greg", "Matt", "Brandon"];
             const playerPicks = {};
             players.forEach(player => {
-              playerPicks[player] = { driver: "N/A", finish: "N/A", winner: "No" };
+              playerPicks[player] = { driver: "N/A", finish: "N/A", winner: false };
             });
 
             // Fill in picks for each player
-            picks.forEach(pick => {
-              playerPicks[pick.player] = {
-                driver: pick.driver,
-                finish: pick.finish || "TBD",
-                winner: pick.winner ? "Yes" : "No"
-              };
-            });
+            if (picks && Array.isArray(picks)) {
+              picks.forEach(pick => {
+                playerPicks[pick.player] = {
+                  driver: pick.driver,
+                  finish: pick.finish || "TBD",
+                  winner: pick.winner || false
+                };
+              });
+            } else {
+              console.error("Picks data is missing or not an array for race:", doc.id, picks);
+            }
 
-            // Add cells for each player (driver, finish, winner)
+            // Add cells for each player (driver, finish)
             players.forEach(player => {
               const pick = playerPicks[player];
               row.insertCell().innerText = pick.driver;
               const finishCell = row.insertCell();
               finishCell.innerText = pick.finish;
-              const winnerCell = row.insertCell();
-              winnerCell.innerText = pick.winner;
-              if (pick.winner === "Yes") {
+              if (pick.winner) {
                 finishCell.className = "winner";
-                winnerCell.className = "winner";
               }
             });
           }
         });
+      }).catch((error) => {
+        console.error("Error fetching season history:", error);
       });
     }
   </script>
