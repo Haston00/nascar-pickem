@@ -1,83 +1,161 @@
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "your-api-key",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "your-sender-id",
-    appId: "your-app-id"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Big Dawg's Nascar Pickem 2025</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; }
+    h1 { color: #d40000; }
+    table { border-collapse: collapse; width: 90%; margin: 20px auto; }
+    th, td { border: 1px solid black; padding: 8px; }
+    th { background-color: #333; color: white; }
+    .winner { background-color: #90ee90; font-weight: bold; }
+    .standings { width: 50%; margin: 20px auto; }
+  </style>
+</head>
+<body>
+  <h1>Big Dawg's Nascar Pickem 2025</h1>
+  <div id="login">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Log In</button>
+  </div>
+  <div id="pool" style="display:none;">
+    <h2>Current Race: <span id="raceName">Loading...</span></h2>
+    <table id="picksTable">
+      <tr><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>
+    </table>
+    <h3>Season Standings</h3>
+    <table id="standingsTable" class="standings">
+      <tr><th>Player</th><th>Wins</th></tr>
+    </table>
+    <h3>Average Driver Finish</h3>
+    <table id="averageTable" class="standings">
+      <tr><th>Player</th><th>Average Finish</th></tr>
+    </table>
+    <h3>Season History</h3>
+    <table id="historyTable">
+      <tr><th>Race</th><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>
+    </table>
+  </div>
 
-  function login() {
-    console.log("Login function called");
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    console.log("Attempting to sign in with email:", email);
-    auth.signInWithEmailAndPassword(email, password)
-      .then((userCredential) => {
-        console.log("Login successful:", userCredential.user.email);
-        document.getElementById("login").style.display = "none";
-        document.getElementById("pool").style.display = "block";
-        loadData();
-      })
-      .catch((error) => {
-        console.error("Login failed:", error.code, error.message);
-        alert("Login failed: " + error.message);
-      });
-  }
+  <!-- Firebase SDK (compat versions) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script>
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDljeqAAW3mF5vlvR7NfaoHVja05j4kFT8",
+      authDomain: "big-dawg-s-nascar.firebaseapp.com",
+      projectId: "big-dawg-s-nascar",
+      storageBucket: "big-dawg-s-nascar.firebasestorage.app",
+      messagingSenderId: "432482855826",
+      appId: "1:432482855826:web:1f1d961564da6d042daf4b",
+      measurementId: "G-F07JSF8LJS"
+    };
 
-  function loadData() {
-    db.collection("races").doc("current").get().then((doc) => {
-      const race = doc.data();
-      document.getElementById("race").innerHTML = race.raceName;
-      const picks = race.picks;
-      let picksHTML = "<table><tr><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>";
-      picks.forEach(pick => {
-        picksHTML += `<tr><td>${pick.player}</td><td>${pick.driver}</td><td>${pick.finish}</td><td>${pick.winner}</td></tr>`;
-      });
-      picksHTML += "</table>";
-      document.getElementById("picks").innerHTML = picksHTML;
-    });
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    db.collection("standings").get().then((querySnapshot) => {
-      let standingsHTML = "<table><tr><th>Player</th><th>Wins</th></tr>";
-      querySnapshot.forEach((doc) => {
-        standingsHTML += `<tr><td>${doc.id}</td><td>${doc.data().wins}</td></tr>`;
-      });
-      standingsHTML += "</table>";
-      document.getElementById("standings").innerHTML = standingsHTML;
-    });
+    function login() {
+      console.log("Login function called");
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      console.log("Attempting to sign in with email:", email);
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          console.log("Login successful:", userCredential.user.email);
+          document.getElementById("login").style.display = "none";
+          document.getElementById("pool").style.display = "block";
+          loadData();
+        })
+        .catch((error) => {
+          console.error("Login failed:", error.code, error.message);
+          alert("Login failed: " + error.message);
+        });
+    }
 
-    db.collection("averages").get().then((querySnapshot) => {
-      let averagesHTML = "<table><tr><th>Player</th><th>Average Driver Finish</th></tr>";
-      querySnapshot.forEach((doc) => {
-        averagesHTML += `<tr><td>${doc.id}</td><td>${doc.data().average}</td></tr>`;
-      });
-      averagesHTML += "</table>";
-      document.getElementById("averages").innerHTML = averagesHTML;
-    });
-
-    db.collection("races").get().then((querySnapshot) => {
-      let historyHTML = "<table id='historyTable'><tr><th>Race</th><th>Player</th><th>Driver</th><th>Finish</th><th>Winner</th></tr>";
-      querySnapshot.forEach((doc) => {
-        if (doc.id !== "current") {
-          const race = doc.data();
-          race.picks.forEach(pick => {
-            historyHTML += `<tr><td>${race.raceName}</td><td>${pick.player}</td><td>${pick.driver}</td><td>${pick.finish}</td><td>${pick.winner}</td></tr>`;
+    function loadData() {
+      // Current Race
+      db.collection("races").doc("current").get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById("raceName").innerText = data.raceName;
+          const table = document.getElementById("picksTable");
+          // Clear existing rows (except header)
+          while (table.rows.length > 1) {
+            table.deleteRow(1);
+          }
+          data.picks.forEach(pick => {
+            const row = table.insertRow();
+            row.insertCell().innerText = pick.player;
+            row.insertCell().innerText = pick.driver;
+            row.insertCell().innerText = pick.finish || "TBD";
+            row.insertCell().innerText = pick.winner ? "Yes" : "No";
+            if (pick.winner) row.className = "winner";
           });
         }
       });
-      historyHTML += "</table>";
-      document.getElementById("history").innerHTML = historyHTML;
-    });
-  }
-</script>
+
+      // Standings
+      db.collection("standings").orderBy("wins", "desc").get().then((query) => {
+        const table = document.getElementById("standingsTable");
+        // Clear existing rows (except header)
+        while (table.rows.length > 1) {
+          table.deleteRow(1);
+        }
+        query.forEach((doc) => {
+          const data = doc.data();
+          const row = table.insertRow();
+          row.insertCell().innerText = doc.id;
+          row.insertCell().innerText = data.wins;
+        });
+      });
+
+      // Average Finishes
+      db.collection("averages").get().then((query) => {
+        const table = document.getElementById("averageTable");
+        // Clear existing rows (except header)
+        while (table.rows.length > 1) {
+          table.deleteRow(1);
+        }
+        query.forEach((doc) => {
+          const data = doc.data();
+          const row = table.insertRow();
+          row.insertCell().innerText = doc.id;
+          row.insertCell().innerText = data.average.toFixed(2);
+        });
+      });
+
+      // Season History
+      db.collection("races").get().then((query) => {
+        const table = document.getElementById("historyTable");
+        // Clear existing rows (except header)
+        while (table.rows.length > 1) {
+          table.deleteRow(1);
+        }
+        query.forEach((doc) => {
+          if (doc.id !== "current") {
+            const data = doc.data();
+            data.picks.forEach(pick => {
+              const row = table.insertRow();
+              row.insertCell().innerText = data.raceName;
+              row.insertCell().innerText = pick.player;
+              row.insertCell().innerText = pick.driver;
+              row.insertCell().innerText = pick.finish || "TBD";
+              row.insertCell().innerText = pick.winner ? "Yes" : "No";
+              if (pick.winner) row.cells[4].className = "winner";
+            });
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
 
 
   
