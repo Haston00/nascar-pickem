@@ -174,7 +174,11 @@
               console.log("Processing pick for race", raceName, ":", pick);
               const player = pick.player;
               if (players.includes(player)) {
-                picksByPlayer[player] = pick;
+                picksByPlayer[player] = {
+                  driver: pick.driver || "N/A",
+                  finish: pick.finish || "N/A",
+                  winner: pick.winner || false
+                };
               }
             });
 
@@ -182,9 +186,9 @@
             players.forEach(player => {
               const pick = picksByPlayer[player] || { driver: "N/A", finish: "N/A", winner: false };
               console.log("Rendering pick for player", player, "in race", raceName, ":", pick);
-              row.insertCell().innerText = pick.driver || "N/A";
+              row.insertCell().innerText = pick.driver;
               const finishCell = row.insertCell();
-              finishCell.innerText = pick.finish || "N/A";
+              finishCell.innerText = pick.finish;
               if (pick.winner === true || pick.winner === "Yes") {
                 finishCell.className = "winner";
               }
