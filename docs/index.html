@@ -158,90 +158,111 @@
           finishes[player] = [];
         });
 
-        // Process each race
+        // Collect all races into an array for sorting
+        const races = [];
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            const raceName = data.racename ? data.racename.trim().toLowerCase() : doc.id.toLowerCase();
-            const picks = Array.isArray(data.picks) ? Array.from(data.picks) : [];
-            console.log("Race:", raceName, "Raw picks data:", data.picks);
-            console.log("Processed picks array:", picks);
-            const row = table.insertRow();
-            row.insertCell().innerText = data.racename || doc.id;
-
-            // Create a map of picks by player
-            const picksByPlayer = {};
-            picks.forEach((pick, index) => {
-              console.log(`Pick at index ${index} for race ${raceName}:`, pick);
-              const player = pick.player ? pick.player.trim() : "";
-              console.log(`Player after trim: "${player}"`);
-              if (player && players.includes(player)) {
-                console.log(`Player ${player} matches players array:`, players);
-                picksByPlayer[player] = pick;
-              } else {
-                console.log(`Player "${player}" does not match any in players array:`, players);
-              }
-            });
-
-            // Log the final picksByPlayer map
-            console.log("Final picksByPlayer for race", raceName, ":", picksByPlayer);
-
-            // Add cells for each player (driver, finish)
-            players.forEach(player => {
-              const pick = picksByPlayer[player];
-              console.log(`Rendering pick for player ${player} in race ${raceName}:`, pick);
-              if (pick) {
-                console.log(`Raw pick object for ${player}:`, pick);
-                // Check for different case variations of the driver and finish fields
-                const driverValue = pick.driver || pick.Driver || pick.DRIVER || "N/A";
-                let finishValue = pick.finish || pick.Finish || pick.FINISH;
-                console.log(`Possible driver fields for ${player}: driver=${pick.driver}, Driver=${pick.Driver}, DRIVER=${pick.DRIVER}`);
-                console.log(`Possible finish fields for ${player}: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
-                // Hardcode Pop's finish for Ambetter 400 Atlanta
-                if (raceName === "ambetter 400 atlanta" && player === "Pop") {
-                  finishValue = "7th";
-                  console.log(`Hardcoding finish for Pop in Ambetter 400 Atlanta to: 7th`);
-                } else {
-                  finishValue = finishValue || "N/A";
-                }
-                // Hardcode Matty's driver for EchoPark GP
-                const finalDriverValue = (raceName === "echopark gp" && player === "Matty") ? "Kyle Busch" : driverValue;
-                console.log(`Selected driver value for ${player}:`, finalDriverValue);
-                console.log(`Selected finish value for ${player}:`, finishValue);
-                row.insertCell().innerText = finalDriverValue;
-                const finishCell = row.insertCell();
-                finishCell.innerText = finishValue;
-                if (pick.winner === true || pick.winner === "Yes") {
-                  finishCell.className = "winner";
-                }
-              } else {
-                row.insertCell().innerText = "N/A";
-                const finishCell = row.insertCell();
-                finishCell.innerText = "N/A";
-              }
-            });
-
-            // Update wins and finishes for standings/averages
-            picks.forEach(pick => {
-              const player = pick.player ? pick.player.trim() : "";
-              if (players.includes(player)) {
-                if (pick.winner) {
-                  wins[player]++;
-                }
-                let finishValue = pick.finish || pick.Finish || pick.FINISH;
-                if (raceName === "ambetter 400 atlanta" && player === "Pop") {
-                  finishValue = "7th";
-                }
-                if (finishValue && finishValue !== "TBD" && finishValue !== "N/A") {
-                  const finishNum = parseInt(finishValue.replace(/\D/g, '')); // Extract number from "7th"
-                  if (!isNaN(finishNum)) {
-                    finishes[player] = finishes[player] || [];
-                    finishes[player].push(finishNum);
-                  }
-                }
-              }
+            races.push({
+              id: doc.id,
+              data: data
             });
           }
+        });
+
+        // Log races before sorting
+        console.log("Races before sorting:", races.map(race => ({ id: race.id, date: race.data.date })));
+
+        // Sort races by date
+        races.sort((a, b) => {
+          const dateA = a.data.date ? a.data.date.trim() : "9999-12-31"; // Default to a far future date if missing
+          const dateB = b.data.date ? b.data.date.trim() : "9999-12-31";
+          return dateA < dateB ? -1 : dateA > dateB ? 1 : 0; // Explicit comparison for ascending order
+        });
+
+        // Log races after sorting
+        console.log("Races after sorting:", races.map(race => ({ id: race.id, date: race.data.date })));
+
+        // Process each race in sorted order
+        races.forEach((race) => {
+          const data = race.data;
+          const raceName = data.racename ? data.racename.trim().toLowerCase() : race.id.toLowerCase();
+          const picks = Array.isArray(data.picks) ? Array.from(data.picks) : [];
+          console.log("Race:", raceName, "Raw picks data:", data.picks);
+          console.log("Processed picks array:", picks);
+          const row = table.insertRow();
+          row.insertCell().innerText = data.racename || race.id;
+
+          // Create a map of picks by player
+          const picksByPlayer = {};
+          picks.forEach((pick, index) => {
+            console.log(`Pick at index ${index} for race ${raceName}:`, pick);
+            const player = pick.player ? pick.player.trim() : "";
+            console.log(`Player after trim: "${player}"`);
+            if (player && players.includes(player)) {
+              console.log(`Player ${player} matches players array:`, players);
+              picksByPlayer[player] = pick;
+            } else {
+              console.log(`Player "${player}" does not match any in players array:`, players);
+            }
+          });
+
+          // Log the final picksByPlayer map
+          console.log("Final picksByPlayer for race", raceName, ":", picksByPlayer);
+
+          // Add cells for each player (driver, finish)
+          players.forEach(player => {
+            const pick = picksByPlayer[player];
+            console.log(`Rendering pick for player ${player} in race ${raceName}:`, pick);
+            if (pick) {
+              console.log(`Raw pick object for ${player}:`, pick);
+              // Check for different case variations of the driver and finish fields
+              const driverValue = pick.driver || pick.Driver || pick.DRIVER || "N/A";
+              let finishValue = pick.finish || pick.Finish || pick.FINISH;
+              console.log(`Possible driver fields for ${player}: driver=${pick.driver}, Driver=${pick.Driver}, DRIVER=${pick.DRIVER}`);
+              console.log(`Possible finish fields for ${player}: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
+              // Hardcode Pop's finish for Ambetter 400 Atlanta
+              if (raceName === "ambetter 400 atlanta" && player === "Pop") {
+                finishValue = "7th";
+                console.log(`Hardcoding finish for Pop in Ambetter 400 Atlanta to: 7th`);
+              } else {
+                finishValue = finishValue || "N/A";
+              }
+              console.log(`Selected driver value for ${player}:`, driverValue);
+              console.log(`Selected finish value for ${player}:`, finishValue);
+              row.insertCell().innerText = driverValue;
+              const finishCell = row.insertCell();
+              finishCell.innerText = finishValue;
+              if (pick.winner === true || pick.winner === "Yes") {
+                finishCell.className = "winner";
+              }
+            } else {
+              row.insertCell().innerText = "N/A";
+              const finishCell = row.insertCell();
+              finishCell.innerText = "N/A";
+            }
+          });
+
+          // Update wins and finishes for standings/averages
+          picks.forEach(pick => {
+            const player = pick.player ? pick.player.trim() : "";
+            if (players.includes(player)) {
+              if (pick.winner) {
+                wins[player]++;
+              }
+              let finishValue = pick.finish || pick.Finish || pick.FINISH;
+              if (raceName === "ambetter 400 atlanta" && player === "Pop") {
+                finishValue = "7th";
+              }
+              if (finishValue && finishValue !== "TBD" && finishValue !== "N/A") {
+                const finishNum = parseInt(finishValue.replace(/\D/g, '')); // Extract number from "7th"
+                if (!isNaN(finishNum)) {
+                  finishes[player] = finishes[player] || [];
+                  finishes[player].push(finishNum);
+                }
+              }
+            }
+          });
         });
 
         // Update Season Standings
@@ -259,7 +280,7 @@
         // Update Average Driver Finish
         const averageTable = document.getElementById("averageTable");
         while (averageTable.rows.length > 1) {
-          table.deleteRow(1);
+          averageTable.deleteRow(1);
         }
         const averages = {};
         players.forEach(player => {
@@ -283,4 +304,3 @@
   </script>
 </body>
 </html>
-
