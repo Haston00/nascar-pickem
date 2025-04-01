@@ -115,7 +115,7 @@
         if (doc.exists) {
           console.log("Current race data:", doc.data());
           const data = doc.data();
-          document.getElementById("raceName").innerText = data.raceName || "Unknown Race";
+          document.getElementById("raceName").innerText = data.racename || "Unknown Race";
           const table = document.getElementById("picksTable");
           while (table.rows.length > 1) {
             table.deleteRow(1);
@@ -124,7 +124,7 @@
             data.picks.forEach(pick => {
               const row = table.insertRow();
               row.insertCell().innerText = pick.player;
-              row.insertCell().innerText = pick.driver;
+              row.insertCell().innerText = pick.driver || "N/A";
               row.insertCell().innerText = pick.finish || "TBD";
               row.insertCell().innerText = pick.winner ? "Yes" : "No";
               if (pick.winner) row.className = "winner";
@@ -162,12 +162,12 @@
         query.forEach((doc) => {
           if (doc.id !== "current") {
             const data = doc.data();
-            const raceName = data.raceName ? data.raceName.trim().toLowerCase() : doc.id.toLowerCase();
+            const raceName = data.racename ? data.racename.trim().toLowerCase() : doc.id.toLowerCase();
             const picks = Array.isArray(data.picks) ? Array.from(data.picks) : [];
             console.log("Race:", raceName, "Raw picks data:", data.picks);
             console.log("Processed picks array:", picks);
             const row = table.insertRow();
-            row.insertCell().innerText = data.raceName || doc.id;
+            row.insertCell().innerText = data.racename || doc.id;
 
             // Create a map of picks by player
             const picksByPlayer = {};
@@ -191,9 +191,11 @@
               const pick = picksByPlayer[player];
               console.log(`Rendering pick for player ${player} in race ${raceName}:`, pick);
               if (pick) {
-                console.log(`Pick details for ${player}:`, pick);
-                // Check for different case variations of the finish field
+                console.log(`Raw pick object for ${player}:`, pick);
+                // Check for different case variations of the driver and finish fields
+                const driverValue = pick.driver || pick.Driver || pick.DRIVER || "N/A";
                 let finishValue = pick.finish || pick.Finish || pick.FINISH;
+                console.log(`Possible driver fields for ${player}: driver=${pick.driver}, Driver=${pick.Driver}, DRIVER=${pick.DRIVER}`);
                 console.log(`Possible finish fields for ${player}: finish=${pick.finish}, Finish=${pick.Finish}, FINISH=${pick.FINISH}`);
                 // Hardcode Pop's finish for Ambetter 400 Atlanta
                 if (raceName === "ambetter 400 atlanta" && player === "Pop") {
@@ -202,8 +204,11 @@
                 } else {
                   finishValue = finishValue || "N/A";
                 }
+                // Hardcode Matty's driver for EchoPark GP
+                const finalDriverValue = (raceName === "echopark gp" && player === "Matty") ? "Kyle Busch" : driverValue;
+                console.log(`Selected driver value for ${player}:`, finalDriverValue);
                 console.log(`Selected finish value for ${player}:`, finishValue);
-                row.insertCell().innerText = pick.driver || "N/A";
+                row.insertCell().innerText = finalDriverValue;
                 const finishCell = row.insertCell();
                 finishCell.innerText = finishValue;
                 if (pick.winner === true || pick.winner === "Yes") {
@@ -223,7 +228,10 @@
                 if (pick.winner) {
                   wins[player]++;
                 }
-                let finishValue = (raceName === "ambetter 400 atlanta" && player === "Pop") ? "7th" : (pick.finish || pick.Finish || pick.FINISH);
+                let finishValue = pick.finish || pick.Finish || pick.FINISH;
+                if (raceName === "ambetter 400 atlanta" && player === "Pop") {
+                  finishValue = "7th";
+                }
                 if (finishValue && finishValue !== "TBD" && finishValue !== "N/A") {
                   const finishNum = parseInt(finishValue.replace(/\D/g, '')); // Extract number from "7th"
                   if (!isNaN(finishNum)) {
@@ -251,7 +259,7 @@
         // Update Average Driver Finish
         const averageTable = document.getElementById("averageTable");
         while (averageTable.rows.length > 1) {
-          averageTable.deleteRow(1);
+          table.deleteRow(1);
         }
         const averages = {};
         players.forEach(player => {
@@ -275,3 +283,4 @@
   </script>
 </body>
 </html>
+
