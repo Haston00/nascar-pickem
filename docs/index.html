@@ -228,9 +228,11 @@
               } else {
                 finishValue = finishValue || "N/A";
               }
-              console.log(`Selected driver value for ${player}:`, driverValue);
+              // Hardcode Matty's driver for EchoPark GP
+              const finalDriverValue = (raceName === "echopark gp" && player === "Matty") ? "Kyle Busch" : driverValue;
+              console.log(`Selected driver value for ${player}:`, finalDriverValue);
               console.log(`Selected finish value for ${player}:`, finishValue);
-              row.insertCell().innerText = driverValue;
+              row.insertCell().innerText = finalDriverValue;
               const finishCell = row.insertCell();
               finishCell.innerText = finishValue;
               if (pick.winner === true || pick.winner === "Yes") {
