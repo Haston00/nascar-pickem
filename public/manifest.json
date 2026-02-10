@@ -1,0 +1,21 @@
+{
+  "name": "NASCAR Pick'em",
+  "short_name": "Pick'em",
+  "description": "Haston Family NASCAR Pick'em League",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

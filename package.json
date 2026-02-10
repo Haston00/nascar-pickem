@@ -1,0 +1,13 @@
+{
+  "name": "nascar-pickem",
+  "version": "1.0.0",
+  "description": "NASCAR Pick'em League - Haston Family & Friends",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "twilio": "^4.20.0",
+    "node-fetch": "^3.3.2"
+  }
+}

@@ -1,0 +1,683 @@
+/* NASCAR Pick'em — Racing Theme */
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-dark: #0a0a0a;
+  --bg-card: #141414;
+  --bg-card-hover: #1a1a1a;
+  --border: #2a2a2a;
+  --yellow: #FFD700;
+  --yellow-dim: #b8960a;
+  --green: #00E676;
+  --red: #FF1744;
+  --orange: #FF9100;
+  --white: #f0f0f0;
+  --gray: #888;
+  --gray-light: #bbb;
+  --checkered-size: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-dark);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === CHECKERED FLAG HEADER === */
+.header {
+  background: var(--bg-card);
+  border-bottom: 3px solid var(--yellow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.checkered-bar {
+  height: 8px;
+  background-image:
+    linear-gradient(45deg, #222 25%, transparent 25%),
+    linear-gradient(-45deg, #222 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #222 75%),
+    linear-gradient(-45deg, transparent 75%, #222 75%);
+  background-size: var(--checkered-size) var(--checkered-size);
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  font-size: 32px;
+}
+
+.logo h1 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.5rem;
+  color: var(--yellow);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.logo .subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  color: var(--gray);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* === NAV === */
+nav {
+  display: flex;
+  gap: 4px;
+}
+
+nav a {
+  color: var(--gray-light);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+nav a:hover, nav a.active {
+  color: var(--bg-dark);
+  background: var(--yellow);
+}
+
+/* === MAIN CONTAINER === */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* === RACE BANNER (Next Race) === */
+.race-banner {
+  background: linear-gradient(135deg, #1a1a1a 0%, #222 100%);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--yellow);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.race-banner .race-info h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.3rem;
+  color: var(--yellow);
+  margin-bottom: 4px;
+}
+
+.race-banner .race-info .track {
+  color: var(--gray-light);
+  font-size: 0.9rem;
+}
+
+.race-banner .race-info .date {
+  color: var(--gray);
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.countdown {
+  text-align: center;
+}
+
+.countdown .time {
+  font-family: 'Russo One', sans-serif;
+  font-size: 2rem;
+  color: var(--yellow);
+}
+
+.countdown .label {
+  font-size: 0.7rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.picks-status {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pick-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pick-badge.locked {
+  background: rgba(0, 230, 118, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+.pick-badge.pending {
+  background: rgba(255, 145, 0, 0.15);
+  color: var(--orange);
+  border: 1px solid rgba(255, 145, 0, 0.3);
+}
+
+/* === STANDINGS TABLE === */
+.section-title {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.1rem;
+  color: var(--yellow);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title .icon {
+  font-size: 1.2rem;
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.standings-table thead th {
+  background: #1a1a1a;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.standings-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.standings-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.standings-table tbody td {
+  padding: 14px 16px;
+  font-size: 0.9rem;
+}
+
+.standings-table .rank {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.1rem;
+  color: var(--yellow);
+  width: 40px;
+}
+
+.standings-table .rank.first { color: var(--yellow); }
+.standings-table .rank.second { color: #C0C0C0; }
+.standings-table .rank.third { color: #CD7F32; }
+
+.standings-table .player-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.standings-table .wins {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--green);
+}
+
+.standings-table .streak {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.streak.hot {
+  background: rgba(255, 23, 68, 0.15);
+  color: var(--red);
+}
+
+.streak.cold {
+  background: rgba(136, 136, 136, 0.15);
+  color: var(--gray);
+}
+
+/* === RACE RESULTS CARDS === */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.result-card:hover {
+  border-color: var(--yellow-dim);
+}
+
+.result-card .card-header {
+  background: #1a1a1a;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-card .race-name {
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.9rem;
+  color: var(--yellow);
+}
+
+.result-card .race-date {
+  font-size: 0.75rem;
+  color: var(--gray);
+}
+
+.result-card .card-body {
+  padding: 12px 16px;
+}
+
+.result-card .winner-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-card .winner-row:last-child {
+  border-bottom: none;
+}
+
+.result-card .winner-row.is-winner {
+  background: rgba(255, 215, 0, 0.05);
+  margin: 0 -16px;
+  padding: 8px 16px;
+}
+
+.result-card .position {
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.85rem;
+  color: var(--gray);
+  width: 30px;
+  text-align: center;
+}
+
+.result-card .is-winner .position {
+  color: var(--yellow);
+}
+
+.result-card .pick-player {
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.result-card .pick-driver {
+  font-size: 0.8rem;
+  color: var(--gray-light);
+}
+
+.result-card .finish {
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.result-card .is-winner .finish {
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* === DRIVER USAGE TRACKER === */
+.usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.usage-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.usage-card .player-header {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.usage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.usage-row .driver-name {
+  font-size: 0.85rem;
+}
+
+.usage-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.usage-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+
+.usage-dot.used {
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.usage-dot.maxed {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+/* === SCHEDULE === */
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.2s;
+}
+
+.schedule-item:hover {
+  border-color: var(--yellow-dim);
+}
+
+.schedule-item.completed {
+  opacity: 0.6;
+}
+
+.schedule-item.next {
+  border-color: var(--yellow);
+  background: rgba(255, 215, 0, 0.03);
+}
+
+.schedule-item .race-num {
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.9rem;
+  color: var(--yellow);
+  width: 40px;
+}
+
+.schedule-item .race-details {
+  flex: 1;
+}
+
+.schedule-item .race-details .name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.schedule-item .race-details .track-date {
+  font-size: 0.8rem;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.schedule-item .race-status {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.race-status.complete {
+  background: rgba(0, 230, 118, 0.15);
+  color: var(--green);
+}
+
+.race-status.upcoming {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--yellow);
+}
+
+.race-status.live {
+  background: rgba(255, 23, 68, 0.15);
+  color: var(--red);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* === ADMIN PANEL === */
+.admin-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.admin-section h3 {
+  font-family: 'Russo One', sans-serif;
+  color: var(--yellow);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-primary {
+  background: var(--yellow);
+  color: var(--bg-dark);
+}
+
+.btn-primary:hover {
+  background: #ffe44d;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: var(--red);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--border);
+  color: var(--white);
+}
+
+.btn-secondary:hover {
+  background: #3a3a3a;
+}
+
+select, input {
+  background: #1a1a1a;
+  color: var(--white);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+}
+
+select:focus, input:focus {
+  outline: none;
+  border-color: var(--yellow);
+}
+
+/* === CONFETTI OVERLAY === */
+.confetti-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* === TOAST NOTIFICATIONS === */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--yellow);
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 0.9rem;
+  z-index: 500;
+  animation: slideIn 0.3s ease;
+  max-width: 350px;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* === MOBILE === */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  nav a {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .race-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .logo h1 {
+    font-size: 1.2rem;
+  }
+
+  .standings-table {
+    font-size: 0.85rem;
+  }
+
+  .standings-table thead th,
+  .standings-table tbody td {
+    padding: 10px 10px;
+  }
+}
+
+/* === PAGE SECTIONS (show/hide) === */
+.page { display: none; }
+.page.active { display: block; }
+
+/* === LOADING SPINNER === */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border);
+  border-top-color: var(--yellow);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === EMPTY STATE === */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--gray);
+}
+
+.empty-state .icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 0.9rem;
+}

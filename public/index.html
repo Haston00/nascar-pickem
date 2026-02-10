@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NASCAR Pick'em</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="checkered-bar"></div>
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">🏁</span>
+        <div>
+          <h1>NASCAR Pick'em</h1>
+          <div class="subtitle">Haston Family &amp; Friends &bull; 2025 Season</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#" data-page="standings" class="active">Standings</a>
+        <a href="#" data-page="results">Results</a>
+        <a href="#" data-page="schedule">Schedule</a>
+        <a href="#" data-page="drivers">Drivers</a>
+        <a href="#" data-page="admin">Admin</a>
+      </nav>
+    </div>
+    <div class="checkered-bar"></div>
+  </header>
+
+  <main class="container">
+
+    <!-- ===== STANDINGS PAGE ===== -->
+    <section id="page-standings" class="page active">
+
+      <!-- Next Race Banner -->
+      <div class="race-banner" id="next-race-banner">
+        <div class="race-info">
+          <h2 id="next-race-name">Loading...</h2>
+          <div class="track" id="next-race-track"></div>
+          <div class="date" id="next-race-date"></div>
+        </div>
+        <div class="countdown">
+          <div class="time" id="countdown-timer">--:--:--</div>
+          <div class="label">Until Green Flag</div>
+        </div>
+        <div class="picks-status" id="picks-status"></div>
+      </div>
+
+      <!-- Season Standings -->
+      <div class="section-title">
+        <span class="icon">🏆</span> Season Standings
+      </div>
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Wins</th>
+            <th>2nd</th>
+            <th>3rd</th>
+            <th>Avg Finish</th>
+            <th>Streak</th>
+          </tr>
+        </thead>
+        <tbody id="standings-body">
+        </tbody>
+      </table>
+
+      <!-- Last Race Quick Result -->
+      <div class="section-title">
+        <span class="icon">🏎️</span> Last Race
+      </div>
+      <div id="last-race-result"></div>
+
+    </section>
+
+    <!-- ===== RESULTS PAGE ===== -->
+    <section id="page-results" class="page">
+      <div class="section-title">
+        <span class="icon">📊</span> Race Results
+      </div>
+      <div class="results-grid" id="results-grid"></div>
+    </section>
+
+    <!-- ===== SCHEDULE PAGE ===== -->
+    <section id="page-schedule" class="page">
+      <div class="section-title">
+        <span class="icon">📅</span> 2025 Cup Series Schedule
+      </div>
+      <div class="schedule-list" id="schedule-list"></div>
+    </section>
+
+    <!-- ===== DRIVER USAGE PAGE ===== -->
+    <section id="page-drivers" class="page">
+      <div class="section-title">
+        <span class="icon">🔢</span> Driver Pick Tracker
+        <span style="font-family: Inter; font-size: 0.75rem; color: var(--gray); font-weight: 400; margin-left: 8px;">Max 5 picks per driver</span>
+      </div>
+      <div class="usage-grid" id="usage-grid"></div>
+    </section>
+
+    <!-- ===== ADMIN PAGE ===== -->
+    <section id="page-admin" class="page">
+      <div class="section-title">
+        <span class="icon">⚙️</span> League Admin
+      </div>
+
+      <!-- Manual Pick Entry -->
+      <div class="admin-section">
+        <h3>Enter a Pick</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: end;">
+          <div>
+            <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 4px;">Player</label>
+            <select id="admin-player">
+              <option value="">Select...</option>
+              <option value="Brandon">Brandon</option>
+              <option value="Mom">Mom</option>
+              <option value="Dad">Dad</option>
+              <option value="Greg">Greg</option>
+              <option value="Matt">Matt</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 4px;">Race</label>
+            <select id="admin-race"></select>
+          </div>
+          <div>
+            <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 4px;">Driver</label>
+            <select id="admin-driver"></select>
+          </div>
+          <button class="btn btn-primary" onclick="App.submitPick()">Lock Pick</button>
+        </div>
+        <div id="pick-feedback" style="margin-top: 10px; font-size: 0.85rem;"></div>
+      </div>
+
+      <!-- Fetch Results -->
+      <div class="admin-section">
+        <h3>Fetch Race Results</h3>
+        <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 12px;">Pull finishing order from NASCAR and score the picks.</p>
+        <div style="display: flex; gap: 10px; align-items: end;">
+          <div>
+            <label style="font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 4px;">Race</label>
+            <select id="admin-results-race"></select>
+          </div>
+          <button class="btn btn-primary" onclick="App.fetchResults()">Pull Results</button>
+        </div>
+        <div id="results-feedback" style="margin-top: 10px; font-size: 0.85rem;"></div>
+      </div>
+
+      <!-- Send Text Blasts -->
+      <div class="admin-section">
+        <h3>Send Texts</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="App.sendPickReminder()">📱 Send Pick Reminder</button>
+          <button class="btn btn-secondary" onclick="App.sendResultsText()">📱 Send Results</button>
+          <button class="btn btn-secondary" onclick="App.sendStandingsText()">📱 Send Standings</button>
+        </div>
+        <div id="text-feedback" style="margin-top: 10px; font-size: 0.85rem;"></div>
+      </div>
+
+      <!-- Live Race Monitor -->
+      <div class="admin-section">
+        <h3>Live Race Monitor</h3>
+        <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 12px;">Track your league's picks during the race in real time.</p>
+        <button class="btn btn-primary" id="live-toggle" onclick="App.toggleLiveMonitor()">Start Live Tracking</button>
+        <div id="live-monitor" style="margin-top: 16px;"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CONFETTI CANVAS -->
+  <canvas id="confetti-canvas" class="confetti-overlay"></canvas>
+
+  <script src="/js/confetti.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
