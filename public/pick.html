@@ -542,6 +542,8 @@
       const SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
       const MAX_PER_DRIVER = 5;
 
+      const boogityAudio = new Audio('/audio/boogity.mp3');
+
       async function dbFetch(method, table, query, body) {
         const url = `${SUPABASE_URL}/${table}${query ? '?' + query : ''}`;
         const opts = {
@@ -725,6 +727,10 @@
             driverNum: num,
           });
 
+          // Play DW's boogity call
+          boogityAudio.currentTime = 0;
+          boogityAudio.play().catch(() => {});
+
           // Show confirmation
           document.getElementById('step-3').innerHTML = `
             <div class="confirm-card">
@@ -735,6 +741,8 @@
                 <strong>${name} #${num}</strong><br>
                 for the <strong>${nextRace.race_name}</strong>
               </div>
+              <div style="margin-top:12px;font-family:'Russo One',sans-serif;color:var(--yellow);font-size:0.9rem;letter-spacing:2px;">BOOGITY BOOGITY BOOGITY!</div>
+              <div style="color:var(--gray);font-size:0.8rem;margin-top:4px;">- Darrell Waltrip</div>
               <button class="change-btn" onclick="Pick.changePick()">Change My Pick</button>
             </div>
           `;
