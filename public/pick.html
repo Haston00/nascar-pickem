@@ -642,8 +642,27 @@
         }
       }
 
+      function isRaceLocked() {
+        if (!nextRace) return false;
+        return new Date() >= new Date(nextRace.start_time_utc);
+      }
+
       function selectPlayer(name) {
         selectedPlayer = name;
+
+        // Check if race has started — picks are locked
+        if (isRaceLocked()) {
+          const existing = picks.find(p => p.player === name && p.raceId === nextRace.race_id);
+          goToStep(3);
+          document.getElementById('step-3').innerHTML = `
+            <div class="already-picked" style="border-color: var(--red);">
+              <div class="icon">🔒</div>
+              <div class="msg" style="color: var(--red);">PICKS ARE LOCKED</div>
+              <div class="detail" style="margin-top:8px;">The race has started!${existing ? '<br>Your pick: <strong>' + existing.driver + ' #' + existing.driverNum + '</strong>' : '<br>You didn\'t pick for this race.'}</div>
+            </div>
+          `;
+          return;
+        }
 
         // Check if they already picked for this race
         if (nextRace) {
@@ -655,6 +674,7 @@
                 <div class="icon">🏁</div>
                 <div class="msg">${name}, you already picked!</div>
                 <div class="detail">Your pick: <strong>${existing.driver} #${existing.driverNum}</strong></div>
+                <div style="color:var(--gray);font-size:0.75rem;margin-top:8px;">You can change your pick until the green flag drops</div>
                 <button class="change-btn" onclick="Pick.changePick()" style="margin-top:16px;background:none;border:1px solid #2a2a2a;color:#888;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;">Change My Pick</button>
               </div>
             `;
