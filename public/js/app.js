@@ -145,6 +145,7 @@ const App = (() => {
   function renderAll() {
     renderNextRace();
     renderStandings();
+    renderFrontRowJoe();
     renderLastRace();
     renderResults();
     renderSchedule();
@@ -265,6 +266,44 @@ const App = (() => {
           <td>${s.thirds}</td>
           <td>${s.bonuses}</td>
           <td><span class="streak ${streakClass}">${s.streak || '--'}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // ========== FRONT ROW JOE STANDINGS ==========
+  function renderFrontRowJoe() {
+    const stats = PLAYERS.map(player => {
+      const finishes = [];
+      results.forEach(r => {
+        if (!r.finishOrder || r.finishOrder.length === 0) return;
+        const entry = r.finishOrder.find(f => f.player === player);
+        if (entry && entry.position != null && entry.position !== 99) {
+          finishes.push(entry.position);
+        }
+      });
+
+      const races = finishes.length;
+      const avg = races > 0 ? (finishes.reduce((a, b) => a + b, 0) / races).toFixed(1) : '--';
+      const best = races > 0 ? Math.min(...finishes) : '--';
+      const worst = races > 0 ? Math.max(...finishes) : '--';
+
+      return { player, avg, best, worst, races, avgNum: races > 0 ? parseFloat(avg) : 999 };
+    });
+
+    stats.sort((a, b) => a.avgNum - b.avgNum);
+
+    const tbody = document.getElementById('frontrow-body');
+    tbody.innerHTML = stats.map((s, i) => {
+      const rankClass = i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+      return `
+        <tr>
+          <td class="rank ${rankClass}">${i + 1}</td>
+          <td class="player-name">${s.player}</td>
+          <td style="font-weight:800;color:var(--yellow)">${s.avg}</td>
+          <td style="color:var(--green)">${s.best !== '--' ? 'P' + s.best : '--'}</td>
+          <td style="color:var(--red)">${s.worst !== '--' ? 'P' + s.worst : '--'}</td>
+          <td>${s.races}</td>
         </tr>
       `;
     }).join('');
