@@ -12,6 +12,23 @@
 </head>
 <body>
 
+  <!-- ===== SPLASH SCREEN ===== -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-overlay"></div>
+    <div class="splash-content">
+      <div id="splash-tap" class="splash-tap-prompt">
+        <div class="splash-logo">🏁</div>
+        <h1 class="splash-title">NASCAR PICK'EM</h1>
+        <div class="splash-sub">Haston Family & Friends</div>
+        <div class="splash-tap-text">TAP TO START</div>
+      </div>
+      <div id="splash-video-container" class="splash-video-container" style="display:none;">
+        <div id="youtube-player"></div>
+      </div>
+      <button id="splash-skip" class="splash-skip" style="display:none;">SKIP →</button>
+    </div>
+  </div>
+
   <!-- HEADER -->
   <header class="header">
     <div class="checkered-bar"></div>
@@ -180,6 +197,7 @@
   <canvas id="confetti-canvas" class="confetti-overlay"></canvas>
 
   <script src="/js/confetti.js"></script>
+  <script src="/js/splash.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>
