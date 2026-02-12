@@ -475,8 +475,8 @@
     });
 
     function enterApp() {
-      // Ensure audio context is ready and pre-decode boogity from this tap
-      preDecodeAudio();
+      // Unlock boogity audio from this user tap
+      unlockAudio();
 
       var wrap = document.getElementById('splash-wrap');
       wrap.classList.add('fade-out');
@@ -499,59 +499,42 @@
     }
   </script>
 
+  <!-- Hidden audio element — most reliable mobile playback method -->
+  <audio id="boogityAudio" preload="auto" src="/audio/boogity.mp3"></audio>
+
   <script>
-    // Audio system — pre-decode buffer so playback is instant on tap
-    var audioCtx = null;
-    var boogityDecoded = null;
-    var boogityRaw = null;
+    // Simple HTML5 Audio approach — unlock on first tap, play on driver pick
+    var boogityAudio = document.getElementById('boogityAudio');
+    var audioUnlocked = false;
 
-    // Fetch raw audio bytes on page load
-    fetch('/audio/boogity.mp3')
-      .then(function(r) { return r.arrayBuffer(); })
-      .then(function(buf) { boogityRaw = buf; })
-      .catch(function() {});
-
-    function ensureAudioCtx() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Unlock audio on any user tap (required by iOS/Android)
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      // Play then immediately pause to "unlock" the audio element
+      var p = boogityAudio.play();
+      if (p && p.then) {
+        p.then(function() {
+          boogityAudio.pause();
+          boogityAudio.currentTime = 0;
+          audioUnlocked = true;
+        }).catch(function() {});
+      } else {
+        // Older browsers without promise
+        boogityAudio.pause();
+        boogityAudio.currentTime = 0;
+        audioUnlocked = true;
       }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
-
-    // Pre-decode the audio so it's ready to play instantly
-    function preDecodeAudio() {
-      ensureAudioCtx();
-      if (boogityDecoded || !boogityRaw) return;
-      audioCtx.decodeAudioData(boogityRaw.slice(0), function(decoded) {
-        boogityDecoded = decoded;
-      }, function() {});
     }
 
     function playBoogity() {
-      ensureAudioCtx();
-      if (boogityDecoded) {
-        // Fast path — already decoded, play immediately
-        var source = audioCtx.createBufferSource();
-        source.buffer = boogityDecoded;
-        source.connect(audioCtx.destination);
-        source.start(0);
-      } else if (boogityRaw) {
-        // Fallback — decode now and play when ready
-        audioCtx.decodeAudioData(boogityRaw.slice(0), function(decoded) {
-          boogityDecoded = decoded;
-          var source = audioCtx.createBufferSource();
-          source.buffer = decoded;
-          source.connect(audioCtx.destination);
-          source.start(0);
-        }, function() {});
-      }
+      boogityAudio.currentTime = 0;
+      var p = boogityAudio.play();
+      if (p && p.catch) p.catch(function() {});
     }
 
-    // On every tap, make sure AudioContext is alive and try to pre-decode
-    document.addEventListener('touchstart', function() { preDecodeAudio(); }, { once: false });
-    document.addEventListener('click', function() { preDecodeAudio(); }, { once: false });
+    // Unlock on every tap until it works
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+    document.addEventListener('click', unlockAudio);
   </script>
 
   <div class="pick-header">
