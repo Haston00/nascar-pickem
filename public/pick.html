@@ -782,7 +782,7 @@
 
         // Save to Supabase in the background
         try {
-          await dbFetch('POST', 'nascar_picks', '', {
+          await dbFetch('POST', 'nascar_picks', 'on_conflict=player,race_id', {
             player: selectedPlayer,
             race_id: nextRace.race_id,
             driver: name,

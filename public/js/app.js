@@ -544,7 +544,7 @@ const App = (() => {
     feedback.innerHTML = '<span class="spinner"></span> Saving...';
 
     try {
-      await db('POST', 'nascar_picks', '', {
+      await db('POST', 'nascar_picks', 'on_conflict=player,race_id', {
         player,
         race_id: raceId,
         driver,
