@@ -240,7 +240,7 @@ const App = (() => {
         ${lineup.map(l => {
           if (l.driver) {
             return `
-              <a href="/pick.html" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;color:inherit;${locked ? 'pointer-events:none;' : ''}">
+              <a href="/pick.html?nosplash=1" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;color:inherit;${locked ? 'pointer-events:none;' : ''}">
                 <span style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1.1rem;min-width:36px;text-align:center;">#${l.driverNum}</span>
                 <div style="flex:1;">
                   <div style="font-weight:700;">${l.player}</div>
@@ -252,7 +252,7 @@ const App = (() => {
               </a>`;
           } else {
             return `
-              <a href="/pick.html" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:12px 16px;opacity:0.6;text-decoration:none;color:inherit;${locked ? 'pointer-events:none;' : ''}">
+              <a href="/pick.html?nosplash=1" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:12px 16px;opacity:0.6;text-decoration:none;color:inherit;${locked ? 'pointer-events:none;' : ''}">
                 <span style="font-family:'Russo One',sans-serif;color:var(--gray);font-size:1.1rem;min-width:36px;text-align:center;">?</span>
                 <div style="flex:1;">
                   <div style="font-weight:700;">${l.player}</div>

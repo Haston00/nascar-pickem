@@ -430,13 +430,21 @@
   <script>
     var player;
     var unmuted = false;
+    var skipSplash = window.location.search.indexOf('nosplash') !== -1;
 
-    var tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    var firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode.insertBefore(tag, firstScript);
+    if (skipSplash) {
+      var wrap = document.getElementById('splash-wrap');
+      wrap.style.display = 'none';
+      document.body.style.overflow = '';
+    } else {
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      var firstScript = document.getElementsByTagName('script')[0];
+      firstScript.parentNode.insertBefore(tag, firstScript);
+    }
 
     function onYouTubeIframeAPIReady() {
+      if (skipSplash) return;
       player = new YT.Player('ytPlayer', {
         videoId: 'O_F3KyllNdg',
         playerVars: {
