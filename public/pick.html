@@ -508,25 +508,28 @@
     var audioUnlocked = false;
 
     // Unlock audio on any user tap (required by iOS/Android)
+    // Uses volume 0 so you don't hear it — just tricks the browser
     function unlockAudio() {
       if (audioUnlocked) return;
-      // Play then immediately pause to "unlock" the audio element
+      boogityAudio.volume = 0;
       var p = boogityAudio.play();
       if (p && p.then) {
         p.then(function() {
           boogityAudio.pause();
           boogityAudio.currentTime = 0;
+          boogityAudio.volume = 1;
           audioUnlocked = true;
         }).catch(function() {});
       } else {
-        // Older browsers without promise
         boogityAudio.pause();
         boogityAudio.currentTime = 0;
+        boogityAudio.volume = 1;
         audioUnlocked = true;
       }
     }
 
     function playBoogity() {
+      boogityAudio.volume = 1;
       boogityAudio.currentTime = 0;
       var p = boogityAudio.play();
       if (p && p.catch) p.catch(function() {});
