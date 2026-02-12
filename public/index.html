@@ -143,6 +143,7 @@
         <a href="#" data-page="results">Results</a>
         <a href="#" data-page="schedule">Schedule</a>
         <a href="#" data-page="drivers">Drivers</a>
+        <a href="#" data-page="rules">Rules</a>
         <a href="#" data-page="admin">Admin</a>
       </nav>
     </div>
@@ -195,7 +196,7 @@
             <th>1st</th>
             <th>2nd</th>
             <th>3rd</th>
-            <th>Bonus</th>
+            <th>🧻</th>
             <th>Streak</th>
           </tr>
         </thead>
@@ -254,6 +255,83 @@
         <span style="font-family: Inter; font-size: 0.75rem; color: var(--gray); font-weight: 400; margin-left: 8px;">Max 5 picks per driver</span>
       </div>
       <div class="usage-grid" id="usage-grid"></div>
+    </section>
+
+    <!-- ===== RULES PAGE ===== -->
+    <section id="page-rules" class="page">
+      <div class="section-title">
+        <span class="icon">📋</span> League Rules & Scoring
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+        <h3 style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1rem;margin-bottom:12px;">HOW IT WORKS</h3>
+        <p style="color:var(--white);font-size:0.9rem;line-height:1.6;">
+          Each week, every player picks ONE NASCAR Cup Series driver before the green flag drops. After the race, your driver's actual finishing position determines who earns points among the pickers.
+        </p>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+        <h3 style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1rem;margin-bottom:12px;">SCORING</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-family:'Russo One',sans-serif;font-size:1.5rem;color:var(--green);min-width:40px;text-align:center;">3</span>
+            <div>
+              <div style="font-weight:700;">1st Place Picker</div>
+              <div style="font-size:0.8rem;color:var(--gray);">The picker whose driver finishes highest in the actual race</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-family:'Russo One',sans-serif;font-size:1.5rem;color:var(--yellow);min-width:40px;text-align:center;">2</span>
+            <div>
+              <div style="font-weight:700;">2nd Place Picker</div>
+              <div style="font-size:0.8rem;color:var(--gray);">Second-best driver finish among the pickers</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-family:'Russo One',sans-serif;font-size:1.5rem;color:var(--white);min-width:40px;text-align:center;">1</span>
+            <div>
+              <div style="font-weight:700;">3rd Place Picker</div>
+              <div style="font-size:0.8rem;color:var(--gray);">Third-best driver finish among the pickers</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border);">
+            <span style="font-family:'Russo One',sans-serif;font-size:1.5rem;color:var(--green);min-width:40px;text-align:center;">+1</span>
+            <div>
+              <div style="font-weight:700;">Race Winner Bonus 🏆</div>
+              <div style="font-size:0.8rem;color:var(--gray);">If your driver wins the actual race (P1), you get an extra point</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-family:'Russo One',sans-serif;font-size:1.5rem;color:var(--red);min-width:40px;text-align:center;">+1</span>
+            <div>
+              <div style="font-weight:700;">Toilet Paper Pick of the Week 🧻</div>
+              <div style="font-size:0.8rem;color:var(--gray);">If your driver finishes DEAD LAST in the actual race, you get a pity point</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+        <h3 style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1rem;margin-bottom:12px;">DRIVER LIMIT</h3>
+        <p style="color:var(--white);font-size:0.9rem;line-height:1.6;">
+          You can only pick the same driver <strong style="color:var(--yellow);">5 times</strong> the entire season. This forces you to spread your picks around — no riding one driver all year. The Driver Pick Tracker tab shows how many times you've used each driver.
+        </p>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+        <h3 style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1rem;margin-bottom:12px;">PICK DEADLINE</h3>
+        <p style="color:var(--white);font-size:0.9rem;line-height:1.6;">
+          You can make or change your pick right up until the official race start time. Once the green flag drops, picks are <strong style="color:var(--red);">LOCKED</strong>. No pick = no points that week.
+        </p>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+        <h3 style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1rem;margin-bottom:12px;">"FRONT ROW JOE" NEMECHEK STANDINGS</h3>
+        <p style="color:var(--white);font-size:0.9rem;line-height:1.6;">
+          Separate standings that track the average finishing position of each picker's drivers across all races. The lower the average, the better. This is about consistently picking drivers who run up front.
+        </p>
+      </div>
+
     </section>
 
     <!-- ===== ADMIN PAGE ===== -->

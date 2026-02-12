@@ -535,9 +535,7 @@
       if (p && p.catch) p.catch(function() {});
     }
 
-    // Unlock on every tap until it works
-    document.addEventListener('touchstart', unlockAudio, { passive: true });
-    document.addEventListener('click', unlockAudio);
+    // Only unlock audio after splash is dismissed (enterApp calls unlockAudio)
   </script>
 
   <div class="pick-header">
