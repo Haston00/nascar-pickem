@@ -475,6 +475,17 @@
     });
 
     function enterApp() {
+      // Unlock boogity audio during this user gesture (GREEN FLAG tap)
+      var snd = document.getElementById('boogity');
+      if (snd) {
+        snd.volume = 0.01;
+        snd.play().then(function() {
+          snd.pause();
+          snd.currentTime = 0;
+          snd.volume = 1;
+        }).catch(function() {});
+      }
+
       var wrap = document.getElementById('splash-wrap');
       wrap.classList.add('fade-out');
       if (player && player.setVolume) {
