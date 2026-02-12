@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: nascar-pickem
+    runtime: static
+    staticPublishPath: ./public
