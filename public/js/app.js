@@ -156,6 +156,12 @@ const App = (() => {
     populateAdminDropdowns();
   }
 
+  // ========== HELPERS ==========
+  function isRaceLocked(race) {
+    if (!race) return false;
+    return new Date() >= new Date(race.date);
+  }
+
   // ========== NEXT RACE BANNER ==========
   function renderNextRace() {
     const now = new Date();
@@ -227,29 +233,35 @@ const App = (() => {
       return (DISPLAY_ORDER[a.player] ?? 99) - (DISPLAY_ORDER[b.player] ?? 99);
     });
 
+    const locked = isRaceLocked(nextRace);
+
     container.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
         ${lineup.map(l => {
           if (l.driver) {
             return `
-              <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
+              <a href="/pick.html" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;color:inherit;${locked ? 'pointer-events:none;' : ''}">
                 <span style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1.1rem;min-width:36px;text-align:center;">#${l.driverNum}</span>
                 <div style="flex:1;">
                   <div style="font-weight:700;">${l.player}</div>
                   <div style="font-size:0.8rem;color:var(--gray);">${l.driver}</div>
                 </div>
-                <span style="color:var(--green);font-size:0.75rem;font-weight:700;">LOCKED</span>
-              </div>`;
+                ${locked
+                  ? '<span style="color:var(--red);font-size:0.75rem;font-weight:700;">🔒</span>'
+                  : '<span style="color:var(--green);font-size:0.75rem;font-weight:700;">CHANGE ›</span>'}
+              </a>`;
           } else {
             return `
-              <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:12px 16px;opacity:0.5;">
+              <a href="/pick.html" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:12px 16px;opacity:0.6;text-decoration:none;color:inherit;${locked ? 'pointer-events:none;' : ''}">
                 <span style="font-family:'Russo One',sans-serif;color:var(--gray);font-size:1.1rem;min-width:36px;text-align:center;">?</span>
                 <div style="flex:1;">
                   <div style="font-weight:700;">${l.player}</div>
                   <div style="font-size:0.8rem;color:var(--gray);">No pick yet</div>
                 </div>
-                <span style="color:var(--red);font-size:0.75rem;font-weight:700;">WAITING</span>
-              </div>`;
+                ${locked
+                  ? '<span style="color:var(--red);font-size:0.75rem;font-weight:700;">🔒</span>'
+                  : '<span style="color:var(--yellow);font-size:0.75rem;font-weight:700;">PICK NOW ›</span>'}
+              </a>`;
           }
         }).join('')}
       </div>`;
