@@ -496,6 +496,10 @@
     }
   </script>
 
+  <audio id="boogity" preload="auto">
+    <source src="/audio/boogity.mp3" type="audio/mpeg">
+  </audio>
+
   <div class="pick-header">
     <h1>🏁 MAKE YOUR PICK</h1>
     <div class="race-name" id="pick-race-name">Loading...</div>
@@ -542,9 +546,7 @@
       const SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
       const MAX_PER_DRIVER = 5;
 
-      // Boogity audio - preload it
-      const boogityAudio = new Audio('/audio/boogity.mp3');
-      boogityAudio.preload = 'auto';
+      // Boogity audio is in the HTML <audio> tag
 
       async function dbFetch(method, table, query, body) {
         const url = `${SUPABASE_URL}/${table}${query ? '?' + query : ''}`;
@@ -678,7 +680,7 @@
             const count = playerPicks.filter(p => p.driver === d.name).length;
             const maxed = count >= MAX_PER_DRIVER;
             return `
-              <button class="driver-btn ${maxed ? 'maxed-out' : ''}" onclick="Pick.selectDriver('${d.name}', '${d.num}')">
+              <button class="driver-btn ${maxed ? 'maxed-out' : ''}" onclick="document.getElementById('boogity').currentTime=0;document.getElementById('boogity').play();Pick.selectDriver('${d.name}', '${d.num}')">
                 <span class="car-num">#${d.num}</span>
                 <div>
                   <div class="driver-name">${d.name}</div>
@@ -702,11 +704,7 @@
         const count = picks.filter(p => p.player === selectedPlayer && p.driver === name).length;
         if (count >= MAX_PER_DRIVER) return;
 
-        // Play DW IMMEDIATELY on tap (must be in same call stack as user gesture)
-        boogityAudio.currentTime = 0;
-        boogityAudio.play().catch(() => {});
-
-        // Show confirmation right away with the audio
+        // Show confirmation right away (audio already playing from onclick)
         goToStep(3);
         document.getElementById('step-3').innerHTML = `
           <div class="confirm-card">
