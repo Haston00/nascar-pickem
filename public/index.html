@@ -95,6 +95,13 @@
       }
     });
 
+    // Skip splash if coming from pick page
+    if (window.location.search.indexOf('nosplash') !== -1) {
+      var wrap = document.getElementById('splash-wrap');
+      wrap.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
     function enterApp() {
       var wrap = document.getElementById('splash-wrap');
       wrap.classList.add('fade-out');
