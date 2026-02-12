@@ -1,55 +1,106 @@
-// NASCAR Pick'em — Main App
+// NASCAR Pick'em — Main App (Supabase synced)
 const App = (() => {
   // ========== CONFIG ==========
-  const SUPABASE_URL = ''; // Set after creating Supabase project
-  const SUPABASE_KEY = ''; // anon/public key
+  const SUPABASE_URL = 'https://tayhcgilczndmnswagom.supabase.co/rest/v1';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRheWhjZ2lsY3puZG1uc3dhZ29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzc3NzQsImV4cCI6MjA4NTk1Mzc3NH0.N7svH4ipeC85JiJtTV2VRQHV8irLNRMziP3GKNjRBhE';
   const NASCAR_SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
   const NASCAR_LIVE_URL = (raceId) => `https://cf.nascar.com/cacher/live/series_1/${raceId}/live-feed.json`;
 
   const PLAYERS = ['Brandon', 'Mom', 'Dad', 'Greg', 'Matt'];
   const MAX_PICKS_PER_DRIVER = 5;
 
-  // Local storage keys
-  const LS_SCHEDULE = 'nascar_schedule';
-  const LS_PICKS = 'nascar_picks';
-  const LS_RESULTS = 'nascar_results';
-
   let schedule = [];
   let picks = [];    // { player, raceId, driver, driverNum }
-  let results = [];  // { raceId, raceName, finishOrder: [{player, driver, driverNum, position}], winner }
+  let results = [];  // { raceId, finishOrder, winner, raceWinner, note }
   let liveInterval = null;
+
+  // ========== SUPABASE HELPERS ==========
+  async function db(method, table, query, body) {
+    const url = `${SUPABASE_URL}/${table}${query ? '?' + query : ''}`;
+    const opts = {
+      method,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=representation' : 'return=representation',
+      },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const resp = await fetch(url, opts);
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`DB error: ${resp.status} ${err}`);
+    }
+    const text = await resp.text();
+    return text ? JSON.parse(text) : null;
+  }
 
   // ========== PRE-LOADED RESULTS (races before league started) ==========
   const PRELOADED_RESULTS = [
     {
       raceId: 5593,
       raceName: 'Cook Out Clash at Bowman Gray',
-      raceWinner: 'Ryan Preece',  // Actual race winner — we didn't pick this one
+      raceWinner: 'Ryan Preece',
       note: 'League not active yet — no picks'
     }
   ];
 
   // ========== INIT ==========
-  function init() {
-    loadLocalData();
-    seedPreloadedResults();
+  async function init() {
     setupNav();
-    loadSchedule();
+    await loadFromSupabase();
+    await seedPreloadedResults();
+    await loadSchedule();
   }
 
-  function seedPreloadedResults() {
-    PRELOADED_RESULTS.forEach(pre => {
+  async function loadFromSupabase() {
+    try {
+      const [dbPicks, dbResults] = await Promise.all([
+        db('GET', 'nascar_picks', 'order=created_at.asc'),
+        db('GET', 'nascar_results', 'order=race_id.asc'),
+      ]);
+      picks = (dbPicks || []).map(p => ({
+        player: p.player,
+        raceId: p.race_id,
+        driver: p.driver,
+        driverNum: p.driver_num,
+      }));
+      results = (dbResults || []).map(r => ({
+        raceId: r.race_id,
+        finishOrder: r.finish_order || [],
+        winner: r.winner,
+        raceWinner: r.race_winner,
+        note: r.note,
+      }));
+    } catch (e) {
+      console.error('Supabase load failed:', e);
+    }
+  }
+
+  async function seedPreloadedResults() {
+    for (const pre of PRELOADED_RESULTS) {
       if (!results.find(r => r.raceId === pre.raceId)) {
-        results.push({
-          raceId: pre.raceId,
-          finishOrder: [],
-          winner: null,
-          raceWinner: pre.raceWinner,
-          note: pre.note
-        });
+        try {
+          await db('POST', 'nascar_results', '', {
+            race_id: pre.raceId,
+            finish_order: [],
+            winner: null,
+            race_winner: pre.raceWinner,
+            note: pre.note,
+          });
+          results.push({
+            raceId: pre.raceId,
+            finishOrder: [],
+            winner: null,
+            raceWinner: pre.raceWinner,
+            note: pre.note,
+          });
+        } catch (e) {
+          // Already exists, that's fine
+        }
       }
-    });
-    saveLocalData();
+    }
   }
 
   // ========== NAVIGATION ==========
@@ -66,31 +117,12 @@ const App = (() => {
     });
   }
 
-  // ========== LOCAL STORAGE ==========
-  function loadLocalData() {
-    try {
-      picks = JSON.parse(localStorage.getItem(LS_PICKS)) || [];
-      results = JSON.parse(localStorage.getItem(LS_RESULTS)) || [];
-      schedule = JSON.parse(localStorage.getItem(LS_SCHEDULE)) || [];
-    } catch (e) {
-      picks = []; results = []; schedule = [];
-    }
-  }
-
-  function saveLocalData() {
-    localStorage.setItem(LS_PICKS, JSON.stringify(picks));
-    localStorage.setItem(LS_RESULTS, JSON.stringify(results));
-    localStorage.setItem(LS_SCHEDULE, JSON.stringify(schedule));
-  }
-
   // ========== NASCAR SCHEDULE ==========
   async function loadSchedule() {
-    // Try to fetch fresh schedule, fall back to cached
     try {
       const resp = await fetch(NASCAR_SCHEDULE_URL);
       if (resp.ok) {
         const data = await resp.json();
-        // Filter to only race events (run_type 3) for Cup Series
         schedule = data
           .filter(e => e.run_type === 3 && e.event_name === 'Race')
           .map(e => ({
@@ -102,12 +134,10 @@ const App = (() => {
             seriesId: e.series_id
           }))
           .sort((a, b) => new Date(a.date) - new Date(b.date));
-        saveLocalData();
       }
     } catch (e) {
-      console.log('Using cached schedule');
+      console.log('Schedule fetch failed:', e);
     }
-
     renderAll();
   }
 
@@ -135,11 +165,9 @@ const App = (() => {
     document.getElementById('next-race-track').textContent = nextRace.track;
     document.getElementById('next-race-date').textContent = formatDate(nextRace.dateLocal || nextRace.date);
 
-    // Countdown
     updateCountdown(nextRace.date);
     setInterval(() => updateCountdown(nextRace.date), 1000);
 
-    // Pick status badges
     const statusDiv = document.getElementById('picks-status');
     statusDiv.innerHTML = PLAYERS.map(p => {
       const hasPick = picks.find(pk => pk.raceId === nextRace.raceId && pk.player === p);
@@ -195,7 +223,6 @@ const App = (() => {
         ? (positions.reduce((a, b) => a + b, 0) / positions.length).toFixed(1)
         : '--';
 
-      // Streak
       let streak = '';
       if (results.length > 0) {
         let count = 0;
@@ -209,7 +236,6 @@ const App = (() => {
       return { player, wins, seconds, thirds, avgFinish, streak };
     });
 
-    // Sort by wins desc, then avg finish asc
     stats.sort((a, b) => {
       if (b.wins !== a.wins) return b.wins - a.wins;
       if (a.avgFinish === '--') return 1;
@@ -238,7 +264,6 @@ const App = (() => {
   // ========== LAST RACE ==========
   function renderLastRace() {
     const container = document.getElementById('last-race-result');
-    // Find the last race that had actual picks (not pre-loaded)
     const pickedResults = results.filter(r => r.finishOrder && r.finishOrder.length > 0);
     if (pickedResults.length === 0) {
       container.innerHTML = '<div class="empty-state"><div class="icon">🏎️</div><p>No league results yet — Daytona 500 is up first!</p></div>';
@@ -262,7 +287,6 @@ const App = (() => {
     const race = schedule.find(s => s.raceId === r.raceId);
     const sorted = [...r.finishOrder].sort((a, b) => a.position - b.position);
 
-    // Handle pre-loaded results (no picks, just race winner)
     if (r.note || sorted.length === 0) {
       return `
         <div class="result-card">
@@ -379,7 +403,6 @@ const App = (() => {
 
   // ========== ADMIN: DROPDOWNS ==========
   function populateAdminDropdowns() {
-    // Race dropdowns
     const raceOptions = schedule.map(r =>
       `<option value="${r.raceId}">${r.name} - ${formatDateShort(r.dateLocal || r.date)}</option>`
     ).join('');
@@ -389,7 +412,6 @@ const App = (() => {
     if (adminRace) adminRace.innerHTML = '<option value="">Select race...</option>' + raceOptions;
     if (adminResultsRace) adminResultsRace.innerHTML = '<option value="">Select race...</option>' + raceOptions;
 
-    // Driver dropdown — common Cup drivers
     loadDriverDropdown();
   }
 
@@ -397,7 +419,6 @@ const App = (() => {
     const select = document.getElementById('admin-driver');
     if (!select) return;
 
-    // Top Cup Series drivers for 2025
     const drivers = [
       { num: '5', name: 'Kyle Larson' },
       { num: '9', name: 'Chase Elliott' },
@@ -440,7 +461,7 @@ const App = (() => {
   }
 
   // ========== ADMIN: SUBMIT PICK ==========
-  function submitPick() {
+  async function submitPick() {
     const player = document.getElementById('admin-player').value;
     const raceId = parseInt(document.getElementById('admin-race').value);
     const driverSelect = document.getElementById('admin-driver');
@@ -455,23 +476,38 @@ const App = (() => {
 
     // Check 5-pick limit
     const driverCount = picks.filter(p => p.player === player && p.driver === driver).length;
-    if (driverCount >= MAX_PICKS_PER_DRIVER) {
+    // If they already picked this race with same driver, that's an update not a new use
+    const existingPick = picks.find(p => p.player === player && p.raceId === raceId);
+    const isUpdate = existingPick && existingPick.driver === driver;
+
+    if (driverCount >= MAX_PICKS_PER_DRIVER && !isUpdate) {
       feedback.innerHTML = `<span style="color:var(--red)">${player} has already used ${driver} ${MAX_PICKS_PER_DRIVER} times!</span>`;
       return;
     }
 
-    // Check if already picked for this race
-    const existing = picks.findIndex(p => p.player === player && p.raceId === raceId);
-    if (existing >= 0) {
-      picks[existing] = { player, raceId, driver, driverNum };
-      feedback.innerHTML = `<span style="color:var(--yellow)">Updated ${player}'s pick to ${driver} #${driverNum}</span>`;
-    } else {
-      picks.push({ player, raceId, driver, driverNum });
-      feedback.innerHTML = `<span style="color:var(--green)">Locked! ${player} → ${driver} #${driverNum}</span>`;
-    }
+    feedback.innerHTML = '<span class="spinner"></span> Saving...';
 
-    saveLocalData();
-    renderAll();
+    try {
+      await db('POST', 'nascar_picks', '', {
+        player,
+        race_id: raceId,
+        driver,
+        driver_num: driverNum,
+      });
+
+      // Update local state
+      const existing = picks.findIndex(p => p.player === player && p.raceId === raceId);
+      if (existing >= 0) {
+        picks[existing] = { player, raceId, driver, driverNum };
+        feedback.innerHTML = `<span style="color:var(--yellow)">Updated ${player}'s pick to ${driver} #${driverNum}</span>`;
+      } else {
+        picks.push({ player, raceId, driver, driverNum });
+        feedback.innerHTML = `<span style="color:var(--green)">Locked! ${player} → ${driver} #${driverNum}</span>`;
+      }
+      renderAll();
+    } catch (e) {
+      feedback.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+    }
   }
 
   // ========== ADMIN: FETCH RESULTS ==========
@@ -492,13 +528,11 @@ const App = (() => {
 
       const data = await resp.json();
 
-      // Check if race is complete
       if (data.flag_state !== 9 && data.lap_number < data.laps_in_race) {
         feedback.innerHTML = `<span style="color:var(--orange)">Race in progress — Lap ${data.lap_number}/${data.laps_in_race}</span>`;
         return;
       }
 
-      // Get finishing order for our picks
       const racePicks = picks.filter(p => p.raceId === raceId);
       if (racePicks.length === 0) {
         feedback.innerHTML = '<span style="color:var(--red)">No picks found for this race</span>';
@@ -507,12 +541,10 @@ const App = (() => {
 
       const vehicles = data.vehicles || [];
       const finishOrder = racePicks.map(pick => {
-        // Find the driver in results (match by name or number)
         const match = vehicles.find(v =>
           v.driver?.full_name?.toLowerCase().includes(pick.driver.toLowerCase()) ||
           v.vehicle_number === pick.driverNum
         );
-
         return {
           player: pick.player,
           driver: pick.driver,
@@ -521,33 +553,33 @@ const App = (() => {
         };
       });
 
-      // Determine winner (lowest finishing position)
       finishOrder.sort((a, b) => a.position - b.position);
       const winner = finishOrder[0].player;
 
-      // Save result
+      // Save to Supabase
+      await db('POST', 'nascar_results', '', {
+        race_id: raceId,
+        finish_order: finishOrder,
+        winner,
+      });
+
+      // Update local state
       const existingIdx = results.findIndex(r => r.raceId === raceId);
       const result = { raceId, finishOrder, winner };
-
       if (existingIdx >= 0) {
         results[existingIdx] = result;
       } else {
         results.push(result);
       }
 
-      // Sort results by schedule order
       results.sort((a, b) => {
         const aIdx = schedule.findIndex(s => s.raceId === a.raceId);
         const bIdx = schedule.findIndex(s => s.raceId === b.raceId);
         return aIdx - bIdx;
       });
 
-      saveLocalData();
       renderAll();
-
       feedback.innerHTML = `<span style="color:var(--green)">🏆 ${winner} wins! ${finishOrder[0].driver} finished P${finishOrder[0].position}</span>`;
-
-      // Celebration!
       Confetti.launch();
 
     } catch (e) {
@@ -571,18 +603,17 @@ const App = (() => {
     btn.classList.remove('btn-primary');
     btn.classList.add('btn-danger');
     updateLiveMonitor();
-    liveInterval = setInterval(updateLiveMonitor, 30000); // Every 30 seconds
+    liveInterval = setInterval(updateLiveMonitor, 30000);
   }
 
   async function updateLiveMonitor() {
     const monitor = document.getElementById('live-monitor');
     const now = new Date();
 
-    // Find current/most recent race
     const currentRace = schedule.find(r => {
       const rDate = new Date(r.date);
       const diff = now - rDate;
-      return diff > -3600000 && diff < 18000000; // Within 1hr before to 5hrs after start
+      return diff > -3600000 && diff < 18000000;
     });
 
     if (!currentRace) {
@@ -607,7 +638,6 @@ const App = (() => {
           player: pick.player,
           driver: pick.driver,
           position: match ? match.running_position : '?',
-          lastLap: match ? match.last_lap_time : '--',
           status: match?.status === 1 ? 'Running' : 'Out'
         };
       }).sort((a, b) => (a.position === '?' ? 99 : a.position) - (b.position === '?' ? 99 : b.position));
@@ -637,61 +667,6 @@ const App = (() => {
     }
   }
 
-  // ========== SMS FUNCTIONS ==========
-  async function sendPickReminder() {
-    const feedback = document.getElementById('text-feedback');
-    feedback.innerHTML = '<span class="spinner"></span> Sending pick reminders...';
-
-    try {
-      const resp = await fetch('/api/send-reminder', { method: 'POST' });
-      const data = await resp.json();
-      feedback.innerHTML = `<span style="color:var(--green)">Sent to ${data.sent || 0} players!</span>`;
-    } catch (e) {
-      feedback.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
-    }
-  }
-
-  async function sendResultsText() {
-    const feedback = document.getElementById('text-feedback');
-    if (results.length === 0) {
-      feedback.innerHTML = '<span style="color:var(--red)">No results to send</span>';
-      return;
-    }
-
-    feedback.innerHTML = '<span class="spinner"></span> Sending results...';
-
-    try {
-      const lastResult = results[results.length - 1];
-      const race = schedule.find(s => s.raceId === lastResult.raceId);
-      const resp = await fetch('/api/send-results', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result: lastResult, raceName: race?.name })
-      });
-      const data = await resp.json();
-      feedback.innerHTML = `<span style="color:var(--green)">Results sent!</span>`;
-    } catch (e) {
-      feedback.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
-    }
-  }
-
-  async function sendStandingsText() {
-    const feedback = document.getElementById('text-feedback');
-    feedback.innerHTML = '<span class="spinner"></span> Sending standings...';
-
-    try {
-      const resp = await fetch('/api/send-standings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ results, picks, schedule })
-      });
-      const data = await resp.json();
-      feedback.innerHTML = `<span style="color:var(--green)">Standings sent!</span>`;
-    } catch (e) {
-      feedback.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
-    }
-  }
-
   // ========== HELPERS ==========
   function formatDate(dateStr) {
     if (!dateStr) return '';
@@ -710,9 +685,6 @@ const App = (() => {
     submitPick,
     fetchResults,
     toggleLiveMonitor,
-    sendPickReminder,
-    sendResultsText,
-    sendStandingsText,
     init
   };
 })();
