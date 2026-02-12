@@ -6,8 +6,8 @@ const App = (() => {
   const NASCAR_SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
   const NASCAR_LIVE_URL = (raceId) => `https://cf.nascar.com/cacher/live/series_1/${raceId}/live-feed.json`;
 
-  const PLAYERS = ['Brandon', 'Mom', 'Dad', 'Greg', 'Matt'];
-  const DISPLAY_ORDER = { 'Dad': 0, 'Mom': 1, 'Matt': 2, 'Greg': 3, 'Brandon': 4 };
+  const PLAYERS = ['Brandon', 'Mom', 'Pop', 'Greg', 'Matt'];
+  const DISPLAY_ORDER = { 'Pop': 0, 'Mom': 1, 'Matt': 2, 'Greg': 3, 'Brandon': 4 };
   const MAX_PICKS_PER_DRIVER = 5;
 
   let schedule = [];
@@ -83,7 +83,7 @@ const App = (() => {
     for (const pre of PRELOADED_RESULTS) {
       if (!results.find(r => r.raceId === pre.raceId)) {
         try {
-          await db('POST', 'nascar_results', '', {
+          await db('POST', 'nascar_results', 'on_conflict=race_id', {
             race_id: pre.raceId,
             finish_order: [],
             winner: null,
@@ -763,7 +763,7 @@ const App = (() => {
       const winner = finishOrder[0].player;
 
       // Save to Supabase
-      await db('POST', 'nascar_results', '', {
+      await db('POST', 'nascar_results', 'on_conflict=race_id', {
         race_id: raceId,
         finish_order: finishOrder,
         winner,
