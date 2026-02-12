@@ -457,13 +457,12 @@
       });
     }
 
-    setTimeout(function() {
-      var btn = document.getElementById('enterBtn');
-      if (btn) {
-        btn.style.pointerEvents = 'auto';
-        btn.style.animation = 'btnReveal 1s ease-out forwards, splashPulse 2.5s ease-in-out 1s infinite';
-      }
-    }, 8000);
+    // Show GREEN FLAG button immediately
+    var btn = document.getElementById('enterBtn');
+    if (btn) {
+      btn.style.pointerEvents = 'auto';
+      btn.style.animation = 'btnReveal 1s ease-out forwards, splashPulse 2.5s ease-in-out 1s infinite';
+    }
 
     document.addEventListener('click', function() {
       if (!unmuted && player && player.unMute) {

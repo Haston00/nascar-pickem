@@ -85,14 +85,12 @@
       });
     }
 
-    // ENTER button appears after minimum seconds
-    setTimeout(function() {
-      var btn = document.getElementById('enterBtn');
-      if (btn) {
-        btn.style.pointerEvents = 'auto';
-        btn.style.animation = 'btnReveal 1s ease-out forwards, splashPulse 2.5s ease-in-out 1s infinite';
-      }
-    }, SPLASH_MIN_SECONDS * 1000);
+    // Show GREEN FLAG button immediately
+    var btn = document.getElementById('enterBtn');
+    if (btn) {
+      btn.style.pointerEvents = 'auto';
+      btn.style.animation = 'btnReveal 1s ease-out forwards, splashPulse 2.5s ease-in-out 1s infinite';
+    }
 
     // Unmute on first click/tap
     document.addEventListener('click', function() {
