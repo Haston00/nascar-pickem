@@ -199,48 +199,51 @@ const App = (() => {
   }
 
   // ========== STANDINGS ==========
+  // Scoring: 1st picker = 3pts, 2nd = 2pts, 3rd = 1pt, +1 bonus if driver wins the actual race (P1)
   function renderStandings() {
     const stats = PLAYERS.map(player => {
-      const playerResults = results.map(r => {
-        const entry = r.finishOrder.find(f => f.player === player);
-        return entry ? { ...entry, winner: r.winner } : null;
-      }).filter(Boolean);
+      let points = 0;
+      let firsts = 0;
+      let seconds = 0;
+      let thirds = 0;
+      let bonuses = 0;
 
-      const wins = playerResults.filter(r => r.player === r.winner).length;
-      const seconds = playerResults.filter((r, i) => {
-        const race = results[i];
-        const sorted = [...race.finishOrder].sort((a, b) => a.position - b.position);
-        return sorted[1] && sorted[1].player === player;
-      }).length;
-      const thirds = playerResults.filter((r, i) => {
-        const race = results[i];
-        const sorted = [...race.finishOrder].sort((a, b) => a.position - b.position);
-        return sorted[2] && sorted[2].player === player;
-      }).length;
+      results.forEach(r => {
+        if (!r.finishOrder || r.finishOrder.length === 0) return;
+        const sorted = [...r.finishOrder].sort((a, b) => a.position - b.position);
 
-      const positions = playerResults.map(r => r.position).filter(p => p != null);
-      const avgFinish = positions.length > 0
-        ? (positions.reduce((a, b) => a + b, 0) / positions.length).toFixed(1)
-        : '--';
+        // Find this player's rank among pickers
+        const playerIdx = sorted.findIndex(f => f.player === player);
+        if (playerIdx === -1) return;
 
+        if (playerIdx === 0) { points += 3; firsts++; }
+        else if (playerIdx === 1) { points += 2; seconds++; }
+        else if (playerIdx === 2) { points += 1; thirds++; }
+
+        // Bonus: +1 if their driver finished P1 in the actual race
+        if (sorted[playerIdx].position === 1) { points += 1; bonuses++; }
+      });
+
+      // Win streak (consecutive 1st place among pickers)
       let streak = '';
-      if (results.length > 0) {
+      const scoredResults = results.filter(r => r.finishOrder && r.finishOrder.length > 0);
+      if (scoredResults.length > 0) {
         let count = 0;
-        for (let i = results.length - 1; i >= 0; i--) {
-          if (results[i].winner === player) count++;
+        for (let i = scoredResults.length - 1; i >= 0; i--) {
+          const sorted = [...scoredResults[i].finishOrder].sort((a, b) => a.position - b.position);
+          if (sorted[0] && sorted[0].player === player) count++;
           else break;
         }
         if (count >= 2) streak = `🔥 ${count}W`;
       }
 
-      return { player, wins, seconds, thirds, avgFinish, streak };
+      return { player, points, firsts, seconds, thirds, bonuses, streak };
     });
 
+    // Sort by points desc, then firsts desc
     stats.sort((a, b) => {
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      if (a.avgFinish === '--') return 1;
-      if (b.avgFinish === '--') return -1;
-      return parseFloat(a.avgFinish) - parseFloat(b.avgFinish);
+      if (b.points !== a.points) return b.points - a.points;
+      return b.firsts - a.firsts;
     });
 
     const tbody = document.getElementById('standings-body');
@@ -251,10 +254,11 @@ const App = (() => {
         <tr>
           <td class="rank ${rankClass}">${i + 1}</td>
           <td class="player-name">${s.player}</td>
-          <td class="wins">${s.wins}</td>
+          <td class="wins" style="font-weight:800;color:var(--yellow)">${s.points}</td>
+          <td>${s.firsts}</td>
           <td>${s.seconds}</td>
           <td>${s.thirds}</td>
-          <td>${s.avgFinish}</td>
+          <td>${s.bonuses}</td>
           <td><span class="streak ${streakClass}">${s.streak || '--'}</span></td>
         </tr>
       `;
@@ -311,14 +315,18 @@ const App = (() => {
           <span class="race-date">${race ? formatDateShort(race.dateLocal || race.date) : ''}</span>
         </div>
         <div class="card-body">
-          ${sorted.map(f => `
-            <div class="winner-row ${f.player === r.winner ? 'is-winner' : ''}">
+          ${sorted.map((f, idx) => {
+            let pts = idx === 0 ? 3 : idx === 1 ? 2 : idx === 2 ? 1 : 0;
+            const bonus = f.position === 1 ? 1 : 0;
+            pts += bonus;
+            return `
+            <div class="winner-row ${idx === 0 ? 'is-winner' : ''}">
               <span class="position">P${f.position}</span>
               <span class="pick-player">${f.player}</span>
               <span class="pick-driver">${f.driver} #${f.driverNum || '?'}</span>
-              <span class="finish">${f.player === r.winner ? '🏆 WINNER' : `P${f.position}`}</span>
+              <span class="finish">${idx === 0 ? '🏆' : ''} +${pts}pt${pts !== 1 ? 's' : ''}${bonus ? ' (🏁+1)' : ''}</span>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       </div>
     `;
