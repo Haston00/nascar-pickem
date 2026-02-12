@@ -7,6 +7,7 @@ const App = (() => {
   const NASCAR_LIVE_URL = (raceId) => `https://cf.nascar.com/cacher/live/series_1/${raceId}/live-feed.json`;
 
   const PLAYERS = ['Brandon', 'Mom', 'Dad', 'Greg', 'Matt'];
+  const DISPLAY_ORDER = { 'Dad': 0, 'Mom': 1, 'Matt': 2, 'Greg': 3, 'Brandon': 4 };
   const MAX_PICKS_PER_DRIVER = 5;
 
   let schedule = [];
@@ -246,10 +247,11 @@ const App = (() => {
       return { player, points, firsts, seconds, thirds, bonuses, streak };
     });
 
-    // Sort by points desc, then firsts desc
+    // Sort by points desc, then firsts desc, then respect display order for ties
     stats.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
-      return b.firsts - a.firsts;
+      if (b.firsts !== a.firsts) return b.firsts - a.firsts;
+      return (DISPLAY_ORDER[a.player] ?? 99) - (DISPLAY_ORDER[b.player] ?? 99);
     });
 
     const tbody = document.getElementById('standings-body');
@@ -291,7 +293,10 @@ const App = (() => {
       return { player, avg, best, worst, races, avgNum: races > 0 ? parseFloat(avg) : 999 };
     });
 
-    stats.sort((a, b) => a.avgNum - b.avgNum);
+    stats.sort((a, b) => {
+      if (a.avgNum !== b.avgNum) return a.avgNum - b.avgNum;
+      return (DISPLAY_ORDER[a.player] ?? 99) - (DISPLAY_ORDER[b.player] ?? 99);
+    });
 
     const tbody = document.getElementById('frontrow-body');
     tbody.innerHTML = stats.map((s, i) => {
