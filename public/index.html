@@ -35,6 +35,8 @@
     </div>
   </div>
 
+  <!-- Splash config must load first -->
+  <script src="/js/splash.js"></script>
   <script>
     var player;
     var unmuted = false;
@@ -46,8 +48,6 @@
     firstScript.parentNode.insertBefore(tag, firstScript);
 
     function onYouTubeIframeAPIReady() {
-      if (SPLASH_VIDEO_ID === 'PASTE_VIDEO_ID_HERE') return;
-
       player = new YT.Player('ytPlayer', {
         videoId: SPLASH_VIDEO_ID,
         playerVars: {
@@ -288,7 +288,6 @@
   <canvas id="confetti-canvas" class="confetti-overlay"></canvas>
 
   <script src="/js/confetti.js"></script>
-  <script src="/js/splash.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

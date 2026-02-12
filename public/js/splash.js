@@ -13,8 +13,8 @@
 //   "Ross Chastain wall ride Martinsville"   — the Hail Melon
 //   "Ricky Craven Kurt Busch Darlington 2003" — closest finish ever
 // ============================================
-const SPLASH_VIDEO_ID = 'PASTE_VIDEO_ID_HERE';
-const SPLASH_VIDEO_START = 0;  // Start time in seconds (skip intros)
+const SPLASH_VIDEO_ID = 'O_F3KyllNdg';  // Dale Earnhardt Sr. wins 1998 Daytona 500
+const SPLASH_VIDEO_START = 5;  // Skip the first few seconds of intro
 const SPLASH_MIN_SECONDS = 20; // ENTER button appears after this many seconds
 
 // Floating particle effect (yellow racing sparks)
