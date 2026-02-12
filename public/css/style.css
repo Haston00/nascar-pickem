@@ -1,145 +1,156 @@
-/* ===== SPLASH SCREEN ===== */
-.splash-screen {
+/* ===== SPLASH SCREEN (DABO-style) ===== */
+body.splash-active { margin: 0; overflow: hidden; }
+
+.splash-wrap {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: 9999;
-  background: #000;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: opacity 0.8s ease;
+  z-index: 9999;
 }
 
-.splash-screen.fade-out {
+/* YouTube background */
+.video-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.video-bg iframe {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 200vw; height: 200vh;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Dark overlay — light enough to see the race */
+.splash-wrap .splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    rgba(0,0,0,0.70) 0%,
+    rgba(10,10,10,0.55) 40%,
+    rgba(0,0,0,0.65) 100%
+  );
+}
+
+/* Content */
+.splash-wrap .splash-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  opacity: 0;
+  animation: fadeUp 1.2s ease-out 0.5s forwards;
+}
+
+.splash-flag {
+  font-size: clamp(4rem, 12vw, 7rem);
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.5));
+}
+
+.splash-wrap .splash-title {
+  font-size: clamp(3rem, 12vw, 8rem);
+  font-family: 'Russo One', sans-serif;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: -2px;
+  line-height: 1;
+  text-shadow:
+    0 0 80px rgba(255, 215, 0, 0.5),
+    0 0 160px rgba(255, 215, 0, 0.25),
+    0 4px 20px rgba(0,0,0,0.6);
+}
+
+.splash-wrap .splash-sub {
+  font-size: clamp(0.7rem, 1.3vw, 1rem);
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.5rem;
+}
+
+.splash-tagline {
+  font-size: clamp(0.75rem, 1.5vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: #FFD700;
+  margin-top: 0.5rem;
+}
+
+.unmute-hint {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 1px;
+  opacity: 0;
+  animation: fadeUp 1s ease-out 1.5s forwards;
+}
+
+.unmute-hint.hidden { display: none; }
+
+/* ENTER button — hidden until min seconds */
+.enter-btn {
+  display: inline-block;
+  margin-top: 2rem;
+  padding: 1.1rem 4rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+  color: #000;
+  font-size: 1.15rem;
+  font-family: 'Russo One', sans-serif;
+  font-weight: 800;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 20px rgba(255, 215, 0, 0.4),
+    0 0 40px rgba(255, 215, 0, 0.1);
   opacity: 0;
   pointer-events: none;
 }
 
-.splash-screen.hidden {
-  display: none;
+.enter-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 8px 35px rgba(255, 215, 0, 0.6),
+    0 0 70px rgba(255, 215, 0, 0.25);
 }
 
-.splash-overlay {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: radial-gradient(ellipse at center, transparent 0%, #000 70%);
-  z-index: 1;
+.enter-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Splash fade-out transition */
+.splash-wrap.fade-out {
+  opacity: 0;
+  transition: opacity 1s ease;
   pointer-events: none;
 }
 
-.splash-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.splash-tap-prompt {
-  animation: splashPulse 2s ease-in-out infinite;
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes splashPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  0%, 100% { box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.1); }
+  50% { box-shadow: 0 4px 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3); }
 }
 
-.splash-logo {
-  font-size: 5rem;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
-}
-
-.splash-title {
-  font-family: 'Russo One', sans-serif;
-  font-size: 3rem;
-  color: #FFD700;
-  letter-spacing: 6px;
-  text-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
-  margin-bottom: 8px;
-}
-
-.splash-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  color: #888;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  margin-bottom: 40px;
-}
-
-.splash-tap-text {
-  font-family: 'Russo One', sans-serif;
-  font-size: 0.9rem;
-  color: #555;
-  letter-spacing: 6px;
-  animation: tapBlink 1.5s ease-in-out infinite;
-}
-
-@keyframes tapBlink {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-.splash-video-container {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0; left: 0;
-}
-
-.splash-video-container iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.splash-skip {
-  position: absolute;
-  bottom: 40px;
-  right: 30px;
-  z-index: 10;
-  background: rgba(255, 215, 0, 0.15);
-  border: 1px solid rgba(255, 215, 0, 0.4);
-  color: #FFD700;
-  font-family: 'Russo One', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 2px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.splash-skip:hover {
-  background: rgba(255, 215, 0, 0.3);
-}
-
-@media (max-width: 768px) {
-  .splash-title {
-    font-size: 2rem;
-    letter-spacing: 3px;
-  }
-  .splash-logo {
-    font-size: 3.5rem;
-  }
-  .splash-sub {
-    font-size: 0.8rem;
-    letter-spacing: 3px;
-  }
-  .splash-skip {
-    bottom: 24px;
-    right: 16px;
-    font-size: 0.75rem;
-    padding: 10px 18px;
-  }
+@keyframes btnReveal {
+  from { opacity: 0; transform: translateY(20px); pointer-events: none; }
+  to { opacity: 1; transform: translateY(0); pointer-events: auto; }
 }
 
 /* NASCAR Pick'em — Racing Theme */
