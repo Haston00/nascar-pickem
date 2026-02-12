@@ -543,6 +543,19 @@
       const MAX_PER_DRIVER = 5;
 
       const boogityAudio = new Audio('/audio/boogity.mp3');
+      let audioUnlocked = false;
+
+      // Unlock audio on any user tap (mobile browsers require this)
+      function unlockAudio() {
+        if (audioUnlocked) return;
+        boogityAudio.volume = 0;
+        boogityAudio.play().then(() => {
+          boogityAudio.pause();
+          boogityAudio.currentTime = 0;
+          boogityAudio.volume = 1;
+          audioUnlocked = true;
+        }).catch(() => {});
+      }
 
       async function dbFetch(method, table, query, body) {
         const url = `${SUPABASE_URL}/${table}${query ? '?' + query : ''}`;
@@ -640,6 +653,7 @@
 
       function selectPlayer(name) {
         selectedPlayer = name;
+        unlockAudio();
 
         // Check if they already picked for this race
         if (nextRace) {
@@ -695,6 +709,7 @@
 
       async function selectDriver(name, num) {
         if (!nextRace || !selectedPlayer) return;
+        unlockAudio();
 
         // Double-check 5-pick limit
         const count = picks.filter(p => p.player === selectedPlayer && p.driver === name).length;
