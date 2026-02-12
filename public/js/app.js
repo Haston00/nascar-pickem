@@ -145,6 +145,8 @@ const App = (() => {
   // ========== RENDER EVERYTHING ==========
   function renderAll() {
     renderNextRace();
+    renderWeeklyLineup();
+    renderLiveTracker();
     renderStandings();
     renderFrontRowJoe();
     renderLastRace();
@@ -197,6 +199,137 @@ const App = (() => {
       el.textContent = `${d}d ${h}h ${m}m`;
     } else {
       el.textContent = `${h}h ${m}m ${s}s`;
+    }
+  }
+
+  // ========== THIS WEEK'S STARTING LINEUP ==========
+  function renderWeeklyLineup() {
+    const container = document.getElementById('weekly-lineup');
+    if (!container) return;
+
+    const now = new Date();
+    const nextRace = schedule.find(r => new Date(r.date) > now);
+    if (!nextRace) {
+      container.innerHTML = '<div style="color:var(--gray);text-align:center;padding:12px;">Season complete!</div>';
+      return;
+    }
+
+    const racePicks = picks.filter(p => p.raceId === nextRace.raceId);
+    const lineup = PLAYERS.map(p => {
+      const pick = racePicks.find(pk => pk.player === p);
+      return { player: p, driver: pick ? pick.driver : null, driverNum: pick ? pick.driverNum : null };
+    });
+
+    // Sort: picked players first (in display order), then unpicked
+    lineup.sort((a, b) => {
+      if (a.driver && !b.driver) return -1;
+      if (!a.driver && b.driver) return 1;
+      return (DISPLAY_ORDER[a.player] ?? 99) - (DISPLAY_ORDER[b.player] ?? 99);
+    });
+
+    container.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+        ${lineup.map(l => {
+          if (l.driver) {
+            return `
+              <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
+                <span style="font-family:'Russo One',sans-serif;color:var(--yellow);font-size:1.1rem;min-width:36px;text-align:center;">#${l.driverNum}</span>
+                <div style="flex:1;">
+                  <div style="font-weight:700;">${l.player}</div>
+                  <div style="font-size:0.8rem;color:var(--gray);">${l.driver}</div>
+                </div>
+                <span style="color:var(--green);font-size:0.75rem;font-weight:700;">LOCKED</span>
+              </div>`;
+          } else {
+            return `
+              <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:12px 16px;opacity:0.5;">
+                <span style="font-family:'Russo One',sans-serif;color:var(--gray);font-size:1.1rem;min-width:36px;text-align:center;">?</span>
+                <div style="flex:1;">
+                  <div style="font-weight:700;">${l.player}</div>
+                  <div style="font-size:0.8rem;color:var(--gray);">No pick yet</div>
+                </div>
+                <span style="color:var(--red);font-size:0.75rem;font-weight:700;">WAITING</span>
+              </div>`;
+          }
+        }).join('')}
+      </div>`;
+  }
+
+  // ========== LIVE RACE TRACKER ==========
+  let liveTrackerInterval = null;
+
+  function renderLiveTracker() {
+    const section = document.getElementById('live-tracker-section');
+    if (!section) return;
+
+    const now = new Date();
+    // Show tracker if a race started within the last 5 hours
+    const currentRace = schedule.find(r => {
+      const rDate = new Date(r.date);
+      const diff = now - rDate;
+      return diff > -3600000 && diff < 18000000;
+    });
+
+    if (!currentRace) {
+      section.style.display = 'none';
+      if (liveTrackerInterval) { clearInterval(liveTrackerInterval); liveTrackerInterval = null; }
+      return;
+    }
+
+    section.style.display = 'block';
+    updateLiveTracker(currentRace);
+    if (!liveTrackerInterval) {
+      liveTrackerInterval = setInterval(() => updateLiveTracker(currentRace), 30000);
+    }
+  }
+
+  async function updateLiveTracker(race) {
+    const container = document.getElementById('live-tracker');
+    if (!container) return;
+
+    try {
+      const resp = await fetch(NASCAR_LIVE_URL(race.raceId));
+      if (!resp.ok) throw new Error('Feed not available');
+      const data = await resp.json();
+
+      const racePicks = picks.filter(p => p.raceId === race.raceId);
+      const vehicles = data.vehicles || [];
+
+      const livePositions = racePicks.map(pick => {
+        const match = vehicles.find(v =>
+          v.driver?.full_name?.toLowerCase().includes(pick.driver.toLowerCase()) ||
+          v.vehicle_number === pick.driverNum
+        );
+        return {
+          player: pick.player,
+          driver: pick.driver,
+          driverNum: pick.driverNum,
+          position: match ? match.running_position : '?',
+          status: match?.status === 1 ? 'Running' : 'Out',
+          lapsLed: match?.laps_led || 0,
+        };
+      }).sort((a, b) => (a.position === '?' ? 99 : a.position) - (b.position === '?' ? 99 : b.position));
+
+      const flagEmoji = data.flag_state === 1 ? '🟢' : data.flag_state === 2 ? '🟡' : data.flag_state === 4 ? '🔴' : data.flag_state === 9 ? '🏁' : '⚪';
+
+      container.innerHTML = `
+        <div style="text-align:center;margin-bottom:10px;font-size:0.8rem;color:var(--gray);">
+          ${flagEmoji} Lap ${data.lap_number}/${data.laps_in_race} &bull; Updates every 30s
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+          ${livePositions.map(p => `
+            <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid ${p.position <= 5 ? 'var(--green)' : p.position <= 15 ? 'var(--yellow)' : 'var(--border)'};border-radius:10px;padding:12px 16px;">
+              <span style="font-family:'Russo One',sans-serif;font-size:1.3rem;min-width:44px;text-align:center;color:${p.position <= 5 ? 'var(--green)' : p.position <= 15 ? 'var(--yellow)' : 'var(--white)'};">P${p.position}</span>
+              <div style="flex:1;">
+                <div style="font-weight:700;">${p.player}</div>
+                <div style="font-size:0.8rem;color:var(--gray);">${p.driver} #${p.driverNum}</div>
+              </div>
+              <span style="font-size:0.75rem;font-weight:700;color:${p.status === 'Running' ? 'var(--green)' : 'var(--red)'};">${p.status}</span>
+            </div>
+          `).join('')}
+        </div>`;
+    } catch (e) {
+      container.innerHTML = '<div style="color:var(--gray);text-align:center;padding:12px;">Race feed not available yet</div>';
     }
   }
 
