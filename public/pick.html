@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Make Your Pick!</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #141414;
+      --border: #2a2a2a;
+      --yellow: #FFD700;
+      --green: #00E676;
+      --red: #FF1744;
+      --white: #f0f0f0;
+      --gray: #888;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pick-header {
+      background: var(--card);
+      border-bottom: 3px solid var(--yellow);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .pick-header h1 {
+      font-family: 'Russo One', sans-serif;
+      color: var(--yellow);
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+    }
+
+    .pick-header .race-name {
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .pick-header .race-detail {
+      color: var(--gray);
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+
+    .pick-container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* === STEP INDICATOR === */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all 0.3s;
+    }
+
+    .step-dot.active {
+      background: var(--yellow);
+      width: 30px;
+      border-radius: 5px;
+    }
+
+    .step-dot.done {
+      background: var(--green);
+    }
+
+    /* === SECTIONS === */
+    .pick-step {
+      display: none;
+    }
+
+    .pick-step.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.1rem;
+      color: var(--yellow);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* === PLAYER BUTTONS === */
+    .player-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .player-btn {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      color: var(--white);
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .player-btn:hover, .player-btn:active {
+      border-color: var(--yellow);
+      background: rgba(255, 215, 0, 0.08);
+      transform: scale(1.02);
+    }
+
+    /* === DRIVER LIST === */
+    .driver-search {
+      width: 100%;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--white);
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 12px;
+    }
+
+    .driver-search:focus {
+      outline: none;
+      border-color: var(--yellow);
+    }
+
+    .driver-search::placeholder {
+      color: #555;
+    }
+
+    .driver-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 55vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .driver-btn {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .driver-btn:hover, .driver-btn:active {
+      border-color: var(--yellow);
+      background: rgba(255, 215, 0, 0.08);
+    }
+
+    .driver-btn .car-num {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.2rem;
+      color: var(--yellow);
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .driver-btn .driver-name {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .driver-btn .driver-team {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-top: 1px;
+    }
+
+    .driver-btn.maxed-out {
+      opacity: 0.4;
+      pointer-events: none;
+      border-color: var(--red);
+    }
+
+    .driver-btn.maxed-out::after {
+      content: 'MAXED';
+      font-size: 0.7rem;
+      color: var(--red);
+      font-weight: 800;
+      margin-left: auto;
+    }
+
+    .usage-tag {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    /* === CONFIRMATION === */
+    .confirm-card {
+      background: var(--card);
+      border: 2px solid var(--green);
+      border-radius: 16px;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    .confirm-card .check {
+      font-size: 4rem;
+      margin-bottom: 12px;
+    }
+
+    .confirm-card .msg {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.3rem;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+
+    .confirm-card .detail {
+      font-size: 0.95rem;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .confirm-card .detail strong {
+      color: var(--white);
+    }
+
+    .confirm-card .change-btn {
+      margin-top: 20px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--gray);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .already-picked {
+      background: var(--card);
+      border: 2px solid var(--yellow);
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .already-picked .icon {
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+
+    .already-picked .msg {
+      font-size: 1rem;
+      color: var(--yellow);
+      font-weight: 700;
+    }
+
+    .already-picked .detail {
+      color: var(--gray);
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: var(--gray);
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: var(--yellow);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="pick-header">
+    <h1>🏁 MAKE YOUR PICK</h1>
+    <div class="race-name" id="pick-race-name">Loading...</div>
+    <div class="race-detail" id="pick-race-detail"></div>
+  </div>
+
+  <div class="pick-container">
+    <div class="steps">
+      <div class="step-dot active" id="dot-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+      <div class="step-dot" id="dot-3"></div>
+    </div>
+
+    <!-- STEP 1: Who are you? -->
+    <div class="pick-step active" id="step-1">
+      <div class="step-title">WHO ARE YOU?</div>
+      <div class="player-grid">
+        <button class="player-btn" onclick="Pick.selectPlayer('Brandon')">Brandon</button>
+        <button class="player-btn" onclick="Pick.selectPlayer('Mom')">Mom</button>
+        <button class="player-btn" onclick="Pick.selectPlayer('Dad')">Dad</button>
+        <button class="player-btn" onclick="Pick.selectPlayer('Greg')">Greg</button>
+        <button class="player-btn" onclick="Pick.selectPlayer('Matt')">Matt</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Pick your driver -->
+    <div class="pick-step" id="step-2">
+      <div class="step-title">PICK YOUR DRIVER</div>
+      <input type="text" class="driver-search" id="driver-search" placeholder="Search drivers..." oninput="Pick.filterDrivers()">
+      <div class="driver-list" id="driver-list"></div>
+    </div>
+
+    <!-- STEP 3: Confirmation -->
+    <div class="pick-step" id="step-3">
+    </div>
+
+    <a href="/" class="back-link">View Full Standings →</a>
+  </div>
+
+  <script>
+    const Pick = (() => {
+      const SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
+      const MAX_PER_DRIVER = 5;
+      const LS_PICKS = 'nascar_picks';
+
+      const DRIVERS = [
+        { num: '1', name: 'Ross Chastain', team: 'Trackhouse Racing' },
+        { num: '2', name: 'Austin Cindric', team: 'Team Penske' },
+        { num: '3', name: 'Austin Dillon', team: 'Richard Childress Racing' },
+        { num: '4', name: 'Josh Berry', team: 'Stewart-Haas Racing' },
+        { num: '5', name: 'Kyle Larson', team: 'Hendrick Motorsports' },
+        { num: '6', name: 'Brad Keselowski', team: 'RFK Racing' },
+        { num: '7', name: 'Corey LaJoie', team: 'Spire Motorsports' },
+        { num: '8', name: 'Kyle Busch', team: 'Richard Childress Racing' },
+        { num: '9', name: 'Chase Elliott', team: 'Hendrick Motorsports' },
+        { num: '10', name: 'Noah Gragson', team: 'Stewart-Haas Racing' },
+        { num: '11', name: 'Denny Hamlin', team: 'Joe Gibbs Racing' },
+        { num: '12', name: 'Ryan Blaney', team: 'Team Penske' },
+        { num: '14', name: 'Chase Briscoe', team: 'Stewart-Haas Racing' },
+        { num: '16', name: 'Shane van Gisbergen', team: 'Kaulig Racing' },
+        { num: '17', name: 'Chris Buescher', team: 'RFK Racing' },
+        { num: '19', name: 'Martin Truex Jr.', team: 'Joe Gibbs Racing' },
+        { num: '20', name: 'Christopher Bell', team: 'Joe Gibbs Racing' },
+        { num: '21', name: 'Harrison Burton', team: 'Wood Brothers Racing' },
+        { num: '22', name: 'Joey Logano', team: 'Team Penske' },
+        { num: '23', name: 'Bubba Wallace', team: 'Joe Gibbs Racing' },
+        { num: '24', name: 'William Byron', team: 'Hendrick Motorsports' },
+        { num: '34', name: 'Michael McDowell', team: 'Front Row Motorsports' },
+        { num: '41', name: 'Ryan Preece', team: 'Stewart-Haas Racing' },
+        { num: '43', name: 'Erik Jones', team: 'Legacy Motor Club' },
+        { num: '45', name: 'Tyler Reddick', team: '23XI Racing' },
+        { num: '47', name: 'Ricky Stenhouse Jr.', team: 'JTG Daugherty Racing' },
+        { num: '48', name: 'Alex Bowman', team: 'Hendrick Motorsports' },
+        { num: '54', name: 'Ty Gibbs', team: 'Joe Gibbs Racing' },
+        { num: '77', name: 'Carson Hocevar', team: 'Spire Motorsports' },
+        { num: '99', name: 'Daniel Suárez', team: 'Trackhouse Racing' },
+      ];
+
+      let selectedPlayer = null;
+      let nextRace = null;
+      let picks = [];
+
+      async function init() {
+        picks = JSON.parse(localStorage.getItem(LS_PICKS)) || [];
+
+        try {
+          const resp = await fetch(SCHEDULE_URL);
+          const data = await resp.json();
+          const now = new Date();
+          const races = data
+            .filter(e => e.run_type === 3 && e.event_name === 'Race')
+            .sort((a, b) => new Date(a.start_time_utc) - new Date(b.start_time_utc));
+
+          nextRace = races.find(r => new Date(r.start_time_utc) > now);
+
+          if (nextRace) {
+            document.getElementById('pick-race-name').textContent = nextRace.race_name;
+            const d = new Date(nextRace.start_time_utc);
+            document.getElementById('pick-race-detail').textContent =
+              nextRace.track_name + ' • ' +
+              d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+          } else {
+            document.getElementById('pick-race-name').textContent = 'Season Complete!';
+          }
+        } catch (e) {
+          document.getElementById('pick-race-name').textContent = 'Next Race';
+        }
+      }
+
+      function selectPlayer(name) {
+        selectedPlayer = name;
+
+        // Check if they already picked for this race
+        if (nextRace) {
+          const existing = picks.find(p => p.player === name && p.raceId === nextRace.race_id);
+          if (existing) {
+            goToStep(3);
+            document.getElementById('step-3').innerHTML = `
+              <div class="already-picked">
+                <div class="icon">🏁</div>
+                <div class="msg">${name}, you already picked!</div>
+                <div class="detail">Your pick: <strong>${existing.driver} #${existing.driverNum}</strong></div>
+                <button class="change-btn" onclick="Pick.changePick()" style="margin-top:16px;background:none;border:1px solid #2a2a2a;color:#888;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;">Change My Pick</button>
+              </div>
+            `;
+            return;
+          }
+        }
+
+        goToStep(2);
+        renderDrivers();
+      }
+
+      function renderDrivers(filter = '') {
+        const list = document.getElementById('driver-list');
+        const playerPicks = picks.filter(p => p.player === selectedPlayer);
+
+        list.innerHTML = DRIVERS
+          .filter(d => {
+            if (!filter) return true;
+            const q = filter.toLowerCase();
+            return d.name.toLowerCase().includes(q) || d.num.includes(q);
+          })
+          .map(d => {
+            const count = playerPicks.filter(p => p.driver === d.name).length;
+            const maxed = count >= MAX_PER_DRIVER;
+            return `
+              <button class="driver-btn ${maxed ? 'maxed-out' : ''}" onclick="Pick.selectDriver('${d.name}', '${d.num}')">
+                <span class="car-num">#${d.num}</span>
+                <div>
+                  <div class="driver-name">${d.name}</div>
+                  <div class="driver-team">${d.team}</div>
+                </div>
+                ${count > 0 && !maxed ? `<span class="usage-tag">${count}/${MAX_PER_DRIVER} used</span>` : ''}
+              </button>
+            `;
+          }).join('');
+      }
+
+      function filterDrivers() {
+        const q = document.getElementById('driver-search').value;
+        renderDrivers(q);
+      }
+
+      function selectDriver(name, num) {
+        if (!nextRace || !selectedPlayer) return;
+
+        // Double-check 5-pick limit
+        const count = picks.filter(p => p.player === selectedPlayer && p.driver === name).length;
+        if (count >= MAX_PER_DRIVER) return;
+
+        // Remove existing pick for this race if changing
+        picks = picks.filter(p => !(p.player === selectedPlayer && p.raceId === nextRace.race_id));
+
+        // Save new pick
+        picks.push({
+          player: selectedPlayer,
+          raceId: nextRace.race_id,
+          driver: name,
+          driverNum: num,
+          timestamp: new Date().toISOString()
+        });
+        localStorage.setItem(LS_PICKS, JSON.stringify(picks));
+
+        // Show confirmation
+        goToStep(3);
+        document.getElementById('step-3').innerHTML = `
+          <div class="confirm-card">
+            <div class="check">🏁</div>
+            <div class="msg">LOCKED IN!</div>
+            <div class="detail">
+              <strong>${selectedPlayer}</strong> picked<br>
+              <strong>${name} #${num}</strong><br>
+              for the <strong>${nextRace.race_name}</strong>
+            </div>
+            <button class="change-btn" onclick="Pick.changePick()">Change My Pick</button>
+          </div>
+        `;
+      }
+
+      function changePick() {
+        goToStep(2);
+        renderDrivers();
+      }
+
+      function goToStep(n) {
+        document.querySelectorAll('.pick-step').forEach(s => s.classList.remove('active'));
+        document.getElementById(`step-${n}`).classList.add('active');
+
+        for (let i = 1; i <= 3; i++) {
+          const dot = document.getElementById(`dot-${i}`);
+          dot.className = 'step-dot';
+          if (i < n) dot.classList.add('done');
+          if (i === n) dot.classList.add('active');
+        }
+      }
+
+      return { init, selectPlayer, selectDriver, filterDrivers, changePick };
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => Pick.init());
+  </script>
+</body>
+</html>

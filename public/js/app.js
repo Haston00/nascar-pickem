@@ -238,11 +238,13 @@ const App = (() => {
   // ========== LAST RACE ==========
   function renderLastRace() {
     const container = document.getElementById('last-race-result');
-    if (results.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="icon">🏎️</div><p>No races completed yet</p></div>';
+    // Find the last race that had actual picks (not pre-loaded)
+    const pickedResults = results.filter(r => r.finishOrder && r.finishOrder.length > 0);
+    if (pickedResults.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">🏎️</div><p>No league results yet — Daytona 500 is up first!</p></div>';
       return;
     }
-    const last = results[results.length - 1];
+    const last = pickedResults[pickedResults.length - 1];
     container.innerHTML = renderResultCard(last);
   }
 
