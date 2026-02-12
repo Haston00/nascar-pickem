@@ -40,14 +40,23 @@
   <script>
     var player;
     var unmuted = false;
+    var skipSplash = window.location.search.indexOf('nosplash') !== -1;
 
-    // Load YouTube IFrame API
-    var tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    var firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode.insertBefore(tag, firstScript);
+    // Skip splash immediately if coming from pick page — don't even load YouTube
+    if (skipSplash) {
+      var wrap = document.getElementById('splash-wrap');
+      wrap.style.display = 'none';
+      document.body.style.overflow = '';
+    } else {
+      // Only load YouTube if we're showing the splash
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      var firstScript = document.getElementsByTagName('script')[0];
+      firstScript.parentNode.insertBefore(tag, firstScript);
+    }
 
     function onYouTubeIframeAPIReady() {
+      if (skipSplash) return;
       player = new YT.Player('ytPlayer', {
         videoId: SPLASH_VIDEO_ID,
         playerVars: {
@@ -95,42 +104,35 @@
       }
     });
 
-    function killSplashVideo() {
-      if (player && player.destroy) player.destroy();
-      else if (player && player.stopVideo) player.stopVideo();
-      player = null;
-    }
-
-    // Skip splash if coming from pick page
-    if (window.location.search.indexOf('nosplash') !== -1) {
-      var wrap = document.getElementById('splash-wrap');
-      wrap.style.display = 'none';
-      document.body.style.overflow = '';
-      killSplashVideo();
-    }
-
     function enterApp() {
       var wrap = document.getElementById('splash-wrap');
       wrap.classList.add('fade-out');
 
-      // Fade audio then kill video
+      // Fade audio then destroy player completely
       if (player && player.setVolume) {
         var vol = player.getVolume();
         var fade = setInterval(function() {
           vol -= 10;
           if (vol <= 0) {
             clearInterval(fade);
-            killSplashVideo();
-          } else {
+            if (player && player.stopVideo) player.stopVideo();
+            if (player && player.destroy) player.destroy();
+            player = null;
+          } else if (player) {
             player.setVolume(vol);
           }
         }, 80);
-      } else {
-        killSplashVideo();
+      } else if (player) {
+        if (player.stopVideo) player.stopVideo();
+        if (player.destroy) player.destroy();
+        player = null;
       }
 
       setTimeout(function() {
         wrap.style.display = 'none';
+        // Also nuke the iframe in case destroy didn't work
+        var ytEl = document.getElementById('ytPlayer');
+        if (ytEl) ytEl.remove();
         document.body.style.overflow = '';
       }, 1000);
     }
