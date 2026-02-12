@@ -542,20 +542,9 @@
       const SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
       const MAX_PER_DRIVER = 5;
 
+      // Boogity audio - preload it
       const boogityAudio = new Audio('/audio/boogity.mp3');
-      let audioUnlocked = false;
-
-      // Unlock audio on any user tap (mobile browsers require this)
-      function unlockAudio() {
-        if (audioUnlocked) return;
-        boogityAudio.volume = 0;
-        boogityAudio.play().then(() => {
-          boogityAudio.pause();
-          boogityAudio.currentTime = 0;
-          boogityAudio.volume = 1;
-          audioUnlocked = true;
-        }).catch(() => {});
-      }
+      boogityAudio.preload = 'auto';
 
       async function dbFetch(method, table, query, body) {
         const url = `${SUPABASE_URL}/${table}${query ? '?' + query : ''}`;
@@ -653,7 +642,6 @@
 
       function selectPlayer(name) {
         selectedPlayer = name;
-        unlockAudio();
 
         // Check if they already picked for this race
         if (nextRace) {
@@ -709,23 +697,34 @@
 
       async function selectDriver(name, num) {
         if (!nextRace || !selectedPlayer) return;
-        unlockAudio();
 
         // Double-check 5-pick limit
         const count = picks.filter(p => p.player === selectedPlayer && p.driver === name).length;
         if (count >= MAX_PER_DRIVER) return;
 
-        // Show saving state
+        // Play DW IMMEDIATELY on tap (must be in same call stack as user gesture)
+        boogityAudio.currentTime = 0;
+        boogityAudio.play().catch(() => {});
+
+        // Show confirmation right away with the audio
         goToStep(3);
         document.getElementById('step-3').innerHTML = `
-          <div class="confirm-card" style="border-color: var(--yellow);">
-            <div class="check">⏳</div>
-            <div class="msg" style="color: var(--yellow);">SAVING...</div>
+          <div class="confirm-card">
+            <div class="check">🏁</div>
+            <div class="msg">LOCKED IN!</div>
+            <div class="detail">
+              <strong>${selectedPlayer}</strong> picked<br>
+              <strong>${name} #${num}</strong><br>
+              for the <strong>${nextRace.race_name}</strong>
+            </div>
+            <div style="margin-top:12px;font-family:'Russo One',sans-serif;color:var(--yellow);font-size:0.9rem;letter-spacing:2px;">BOOGITY BOOGITY BOOGITY!</div>
+            <div style="color:var(--gray);font-size:0.8rem;margin-top:4px;">- Darrell Waltrip</div>
+            <button class="change-btn" onclick="Pick.changePick()">Change My Pick</button>
           </div>
         `;
 
+        // Save to Supabase in the background
         try {
-          // Save to Supabase (upsert on player + race_id)
           await dbFetch('POST', 'nascar_picks', '', {
             player: selectedPlayer,
             race_id: nextRace.race_id,
@@ -741,26 +740,6 @@
             driver: name,
             driverNum: num,
           });
-
-          // Play DW's boogity call
-          boogityAudio.currentTime = 0;
-          boogityAudio.play().catch(() => {});
-
-          // Show confirmation
-          document.getElementById('step-3').innerHTML = `
-            <div class="confirm-card">
-              <div class="check">🏁</div>
-              <div class="msg">LOCKED IN!</div>
-              <div class="detail">
-                <strong>${selectedPlayer}</strong> picked<br>
-                <strong>${name} #${num}</strong><br>
-                for the <strong>${nextRace.race_name}</strong>
-              </div>
-              <div style="margin-top:12px;font-family:'Russo One',sans-serif;color:var(--yellow);font-size:0.9rem;letter-spacing:2px;">BOOGITY BOOGITY BOOGITY!</div>
-              <div style="color:var(--gray);font-size:0.8rem;margin-top:4px;">- Darrell Waltrip</div>
-              <button class="change-btn" onclick="Pick.changePick()">Change My Pick</button>
-            </div>
-          `;
         } catch (e) {
           document.getElementById('step-3').innerHTML = `
             <div class="confirm-card" style="border-color: var(--red);">
