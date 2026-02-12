@@ -222,6 +222,11 @@ const App = (() => {
 
         // Bonus: +1 if their driver finished P1 in the actual race
         if (sorted[playerIdx].position === 1) { points += 1; bonuses++; }
+
+        // Toilet Paper Pick: +1 if their driver finished dead last in the actual race
+        const allPositions = r.finishOrder.map(f => f.position).filter(p => p != null && p !== 99);
+        const lastPlace = Math.max(...allPositions);
+        if (sorted[playerIdx].position === lastPlace && lastPlace > 1) { points += 1; }
       });
 
       // Win streak (consecutive 1st place among pickers)
@@ -319,12 +324,16 @@ const App = (() => {
             let pts = idx === 0 ? 3 : idx === 1 ? 2 : idx === 2 ? 1 : 0;
             const bonus = f.position === 1 ? 1 : 0;
             pts += bonus;
+            const allPos = r.finishOrder.map(x => x.position).filter(p => p != null && p !== 99);
+            const deadLast = Math.max(...allPos);
+            const isToiletPaper = f.position === deadLast && deadLast > 1;
+            if (isToiletPaper) pts += 1;
             return `
             <div class="winner-row ${idx === 0 ? 'is-winner' : ''}">
               <span class="position">P${f.position}</span>
               <span class="pick-player">${f.player}</span>
               <span class="pick-driver">${f.driver} #${f.driverNum || '?'}</span>
-              <span class="finish">${idx === 0 ? '🏆' : ''} +${pts}pt${pts !== 1 ? 's' : ''}${bonus ? ' (🏁+1)' : ''}</span>
+              <span class="finish">${idx === 0 ? '🏆' : ''}${isToiletPaper ? '🧻' : ''} +${pts}pt${pts !== 1 ? 's' : ''}${bonus ? ' (🏁+1)' : ''}${isToiletPaper ? ' TOILET PAPER PICK' : ''}</span>
             </div>
           `}).join('')}
         </div>
