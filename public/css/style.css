@@ -793,12 +793,70 @@ select:focus, input:focus {
   }
 
   .standings-table {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .standings-table thead th,
   .standings-table tbody td {
-    padding: 10px 10px;
+    padding: 10px 8px;
+  }
+
+  /* Hide less critical columns on mobile */
+  .standings-table thead th:nth-child(4),
+  .standings-table tbody td:nth-child(4),
+  .standings-table thead th:nth-child(5),
+  .standings-table tbody td:nth-child(5),
+  .standings-table thead th:nth-child(6),
+  .standings-table tbody td:nth-child(6) {
+    display: none;
+  }
+
+  .container {
+    padding: 16px 12px;
+  }
+
+  .race-banner {
+    padding: 16px;
+  }
+
+  .countdown .time {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 0.95rem;
+  }
+
+  .schedule-item {
+    padding: 10px 12px;
+  }
+
+  .schedule-item .race-num {
+    width: 30px;
+    font-size: 0.8rem;
+  }
+
+  .schedule-item .race-details .name {
+    font-size: 0.85rem;
+  }
+
+  .admin-section {
+    padding: 14px;
+  }
+
+  select, input {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+
+  .btn {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+
+  .pick-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
   }
 }
 

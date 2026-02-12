@@ -3,7 +3,7 @@ const App = (() => {
   // ========== CONFIG ==========
   const SUPABASE_URL = ''; // Set after creating Supabase project
   const SUPABASE_KEY = ''; // anon/public key
-  const NASCAR_SCHEDULE_URL = 'https://cf.nascar.com/cacher/2025/1/schedule-feed.json';
+  const NASCAR_SCHEDULE_URL = 'https://cf.nascar.com/cacher/2026/1/schedule-feed.json';
   const NASCAR_LIVE_URL = (raceId) => `https://cf.nascar.com/cacher/live/series_1/${raceId}/live-feed.json`;
 
   const PLAYERS = ['Brandon', 'Mom', 'Dad', 'Greg', 'Matt'];
@@ -19,11 +19,37 @@ const App = (() => {
   let results = [];  // { raceId, raceName, finishOrder: [{player, driver, driverNum, position}], winner }
   let liveInterval = null;
 
+  // ========== PRE-LOADED RESULTS (races before league started) ==========
+  const PRELOADED_RESULTS = [
+    {
+      raceId: 5593,
+      raceName: 'Cook Out Clash at Bowman Gray',
+      raceWinner: 'Ryan Preece',  // Actual race winner — we didn't pick this one
+      note: 'League not active yet — no picks'
+    }
+  ];
+
   // ========== INIT ==========
   function init() {
     loadLocalData();
+    seedPreloadedResults();
     setupNav();
     loadSchedule();
+  }
+
+  function seedPreloadedResults() {
+    PRELOADED_RESULTS.forEach(pre => {
+      if (!results.find(r => r.raceId === pre.raceId)) {
+        results.push({
+          raceId: pre.raceId,
+          finishOrder: [],
+          winner: null,
+          raceWinner: pre.raceWinner,
+          note: pre.note
+        });
+      }
+    });
+    saveLocalData();
   }
 
   // ========== NAVIGATION ==========
@@ -233,6 +259,25 @@ const App = (() => {
   function renderResultCard(r) {
     const race = schedule.find(s => s.raceId === r.raceId);
     const sorted = [...r.finishOrder].sort((a, b) => a.position - b.position);
+
+    // Handle pre-loaded results (no picks, just race winner)
+    if (r.note || sorted.length === 0) {
+      return `
+        <div class="result-card">
+          <div class="card-header">
+            <span class="race-name">${race ? race.name : `Race ${r.raceId}`}</span>
+            <span class="race-date">${race ? formatDateShort(race.dateLocal || race.date) : ''}</span>
+          </div>
+          <div class="card-body">
+            <div style="padding: 12px 0; text-align: center;">
+              <div style="font-size: 0.85rem; color: var(--yellow); font-weight: 700;">Race Winner: ${r.raceWinner || 'N/A'}</div>
+              <div style="font-size: 0.8rem; color: var(--gray); margin-top: 4px;">${r.note || 'No league picks'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <div class="result-card">
         <div class="card-header">
@@ -279,14 +324,15 @@ const App = (() => {
         ? '<span class="race-status" style="color:var(--gray)">Past</span>'
         : '<span class="race-status upcoming">Upcoming</span>';
 
-      const winner = isCompleted ? results.find(res => res.raceId === r.raceId) : null;
+      const resultData = isCompleted ? results.find(res => res.raceId === r.raceId) : null;
+      const winnerName = resultData ? (resultData.winner || resultData.raceWinner || '') : '';
 
       return `
         <div class="schedule-item ${statusClass}">
           <span class="race-num">${i + 1}</span>
           <div class="race-details">
             <div class="name">${r.name}</div>
-            <div class="track-date">${r.track} &bull; ${formatDateShort(r.dateLocal || r.date)}${winner ? ` &bull; Winner: ${winner.winner}` : ''}</div>
+            <div class="track-date">${r.track} &bull; ${formatDateShort(r.dateLocal || r.date)}${winnerName ? ` &bull; Winner: ${winnerName}` : ''}</div>
           </div>
           ${statusBadge}
         </div>

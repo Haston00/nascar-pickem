@@ -25,7 +25,7 @@ exports.handler = async (event) => {
   let track = '';
   try {
     const fetch = (await import('node-fetch')).default;
-    const resp = await fetch('https://cf.nascar.com/cacher/2025/1/schedule-feed.json');
+    const resp = await fetch('https://cf.nascar.com/cacher/2026/1/schedule-feed.json');
     const schedule = await resp.json();
     const now = new Date();
     const races = schedule
