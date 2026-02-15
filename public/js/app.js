@@ -749,29 +749,39 @@ const App = (() => {
       const finishOrder = racePicks.map(pick => {
         const match = vehicles.find(v =>
           v.driver?.full_name?.toLowerCase().includes(pick.driver.toLowerCase()) ||
-          v.vehicle_number === pick.driverNum
+          String(v.vehicle_number) === String(pick.driverNum)
         );
+        const pos = match
+          ? (match.finishing_position || match.running_position)
+          : 99;
         return {
           player: pick.player,
           driver: pick.driver,
           driverNum: pick.driverNum,
-          position: match ? match.running_position : 99
+          position: pos
         };
       });
 
       finishOrder.sort((a, b) => a.position - b.position);
       const winner = finishOrder[0].player;
 
+      // Find the actual race winner (P1 driver)
+      const p1Vehicle = vehicles.find(v =>
+        (v.finishing_position || v.running_position) === 1
+      );
+      const raceWinner = p1Vehicle?.driver?.full_name || null;
+
       // Save to Supabase
       await db('POST', 'nascar_results', 'on_conflict=race_id', {
         race_id: raceId,
         finish_order: finishOrder,
         winner,
+        race_winner: raceWinner,
       });
 
       // Update local state
       const existingIdx = results.findIndex(r => r.raceId === raceId);
-      const result = { raceId, finishOrder, winner };
+      const result = { raceId, finishOrder, winner, raceWinner };
       if (existingIdx >= 0) {
         results[existingIdx] = result;
       } else {
@@ -784,8 +794,9 @@ const App = (() => {
         return aIdx - bIdx;
       });
 
+      console.log('Fetched results:', { raceId, finishOrder, winner, raceWinner });
       renderAll();
-      feedback.innerHTML = `<span style="color:var(--green)">🏆 ${winner} wins! ${finishOrder[0].driver} finished P${finishOrder[0].position}</span>`;
+      feedback.innerHTML = `<span style="color:var(--green)">🏆 ${winner} wins! ${finishOrder[0].driver} finished P${finishOrder[0].position}${raceWinner ? ` | Race winner: ${raceWinner}` : ''}</span>`;
       Confetti.launch();
 
     } catch (e) {
