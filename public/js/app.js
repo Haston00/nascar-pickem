@@ -130,7 +130,7 @@ const App = (() => {
             raceId: e.race_id,
             name: e.race_name,
             track: e.track_name,
-            date: e.start_time_utc,
+            date: e.start_time_utc && !e.start_time_utc.endsWith('Z') ? e.start_time_utc + 'Z' : e.start_time_utc,
             dateLocal: e.start_time,
             seriesId: e.series_id
           }))
@@ -175,8 +175,8 @@ const App = (() => {
     document.getElementById('next-race-track').textContent = nextRace.track;
     document.getElementById('next-race-date').textContent = formatDate(nextRace.dateLocal || nextRace.date);
 
-    updateCountdown(nextRace.date);
-    setInterval(() => updateCountdown(nextRace.date), 1000);
+    updateCountdown(nextRace.dateLocal || nextRace.date);
+    setInterval(() => updateCountdown(nextRace.dateLocal || nextRace.date), 1000);
 
     const statusDiv = document.getElementById('picks-status');
     statusDiv.innerHTML = PLAYERS.map(p => {
