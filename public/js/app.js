@@ -694,22 +694,37 @@ const App = (() => {
     feedback.innerHTML = '<span class="spinner"></span> Saving...';
 
     try {
-      // Get max ID first (sequence permissions may be broken)
-      let nextId = null;
-      try {
-        const maxRows = await db('GET', 'nascar_picks', 'select=id&order=id.desc&limit=1');
-        if (maxRows && maxRows.length > 0) nextId = maxRows[0].id + 1;
-      } catch (e) { /* fall through without id */ }
+      // Check if pick already exists for this player+race
+      const existingRows = await db('GET', 'nascar_picks',
+        `select=id&player=eq.${player}&race_id=eq.${raceId}`);
 
-      const pickData = {
-        player,
-        race_id: raceId,
-        driver,
-        driver_num: driverNum,
-      };
-      if (nextId) pickData.id = nextId;
+      if (existingRows && existingRows.length > 0) {
+        // UPDATE existing pick — no sequence needed
+        await db('PATCH', 'nascar_picks',
+          `player=eq.${player}&race_id=eq.${raceId}`,
+          { driver, driver_num: driverNum });
+      } else {
+        // NEW pick — try without ID first
+        try {
+          await db('POST', 'nascar_picks', 'on_conflict=player,race_id', {
+            player, race_id: raceId, driver, driver_num: driverNum,
+          });
+        } catch (seqErr) {
+          // Sequence broken — retry with explicit ID
+          const maxRows = await db('GET', 'nascar_picks', 'select=id&order=id.desc&limit=1');
+          const nextId = (maxRows && maxRows.length > 0) ? maxRows[0].id + 1 : 1;
+          await db('POST', 'nascar_picks', 'on_conflict=player,race_id', {
+            id: nextId, player, race_id: raceId, driver, driver_num: driverNum,
+          });
+        }
+      }
 
-      await db('POST', 'nascar_picks', 'on_conflict=player,race_id', pickData);
+      // Verify save
+      const verify = await db('GET', 'nascar_picks',
+        `select=driver&player=eq.${player}&race_id=eq.${raceId}`);
+      if (!verify || verify.length === 0 || verify[0].driver !== driver) {
+        throw new Error('Pick did not save — please try again');
+      }
 
       // Update local state
       const existing = picks.findIndex(p => p.player === player && p.raceId === raceId);

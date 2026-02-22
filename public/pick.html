@@ -754,7 +754,7 @@
             const count = playerPicks.filter(p => p.driver === d.name).length;
             const maxed = count >= MAX_PER_DRIVER;
             return `
-              <button class="driver-btn ${maxed ? 'maxed-out' : ''}" onclick="playBoogity();Pick.selectDriver('${d.name}', '${d.num}')">
+              <button class="driver-btn ${maxed ? 'maxed-out' : ''}" onclick="Pick.selectDriver('${d.name}', '${d.num}')">
                 <span class="car-num">#${d.num}</span>
                 <div>
                   <div class="driver-name">${d.name}</div>
@@ -778,41 +778,65 @@
         const count = picks.filter(p => p.player === selectedPlayer && p.driver === name).length;
         if (count >= MAX_PER_DRIVER) return;
 
-        // Show quick confirmation while DW plays
+        // Show saving state first
         goToStep(3);
-        document.getElementById('step-3').innerHTML = `
-          <div class="confirm-card">
-            <div class="check">🏁</div>
-            <div class="msg">LOCKED IN!</div>
-            <div class="detail">
-              <strong>${selectedPlayer}</strong> picked<br>
-              <strong>${name} #${num}</strong><br>
-              for the <strong>${nextRace.race_name}</strong>
-            </div>
-            <div style="margin-top:12px;font-family:'Russo One',sans-serif;color:var(--yellow);font-size:0.9rem;letter-spacing:2px;">BOOGITY BOOGITY BOOGITY!</div>
-            <div style="color:var(--gray);font-size:0.8rem;margin-top:4px;">- Darrell Waltrip</div>
+        const step3 = document.getElementById('step-3');
+        step3.innerHTML = `
+          <div class="confirm-card" style="border-color:var(--yellow);">
+            <div class="check">⏳</div>
+            <div class="msg" style="color:var(--yellow);">SAVING PICK...</div>
           </div>
         `;
 
-        // Save to Supabase then redirect to standings after DW audio finishes
+        // Save to Supabase — bulletproof strategy
+        let saved = false;
         try {
-          // Get max ID first (sequence permissions may be broken)
-          let nextId = null;
-          try {
-            const maxRows = await dbFetch('GET', 'nascar_picks', 'select=id&order=id.desc&limit=1');
-            if (maxRows && maxRows.length > 0) nextId = maxRows[0].id + 1;
-          } catch (e) { /* fall through without id */ }
+          // Check if pick already exists for this player+race
+          const existing = await dbFetch('GET', 'nascar_picks',
+            `select=id&player=eq.${selectedPlayer}&race_id=eq.${nextRace.race_id}`);
 
-          const pickData = {
-            player: selectedPlayer,
-            race_id: nextRace.race_id,
-            driver: name,
-            driver_num: num,
-          };
-          if (nextId) pickData.id = nextId;
+          if (existing && existing.length > 0) {
+            // UPDATE existing pick — no sequence needed
+            await dbFetch('PATCH', 'nascar_picks',
+              `player=eq.${selectedPlayer}&race_id=eq.${nextRace.race_id}`,
+              { driver: name, driver_num: num });
+            saved = true;
+          } else {
+            // NEW pick — try without ID first (normal sequence)
+            try {
+              await dbFetch('POST', 'nascar_picks', 'on_conflict=player,race_id', {
+                player: selectedPlayer,
+                race_id: nextRace.race_id,
+                driver: name,
+                driver_num: num,
+              });
+              saved = true;
+            } catch (seqErr) {
+              // Sequence broken — retry with explicit ID
+              const maxRows = await dbFetch('GET', 'nascar_picks', 'select=id&order=id.desc&limit=1');
+              const nextId = (maxRows && maxRows.length > 0) ? maxRows[0].id + 1 : 1;
+              await dbFetch('POST', 'nascar_picks', 'on_conflict=player,race_id', {
+                id: nextId,
+                player: selectedPlayer,
+                race_id: nextRace.race_id,
+                driver: name,
+                driver_num: num,
+              });
+              saved = true;
+            }
+          }
 
-          await dbFetch('POST', 'nascar_picks', 'on_conflict=player,race_id', pickData);
+          // Verify the pick actually saved
+          const verify = await dbFetch('GET', 'nascar_picks',
+            `select=driver&player=eq.${selectedPlayer}&race_id=eq.${nextRace.race_id}`);
+          if (!verify || verify.length === 0 || verify[0].driver !== name) {
+            saved = false;
+          }
+        } catch (e) {
+          saved = false;
+        }
 
+        if (saved) {
           // Update local state
           picks = picks.filter(p => !(p.player === selectedPlayer && p.raceId === nextRace.race_id));
           picks.push({
@@ -821,14 +845,39 @@
             driver: name,
             driverNum: num,
           });
-        } catch (e) {
-          // Even on error, still redirect — pick may have saved
-        }
 
-        // Wait for DW audio to finish (~11 seconds) then go to standings
-        setTimeout(function() {
-          window.location.href = '/?nosplash=1';
-        }, 11000);
+          // Play boogity and show success
+          playBoogity();
+          step3.innerHTML = `
+            <div class="confirm-card">
+              <div class="check">🏁</div>
+              <div class="msg">LOCKED IN!</div>
+              <div class="detail">
+                <strong>${selectedPlayer}</strong> picked<br>
+                <strong>${name} #${num}</strong><br>
+                for the <strong>${nextRace.race_name}</strong>
+              </div>
+              <div style="margin-top:12px;font-family:'Russo One',sans-serif;color:var(--yellow);font-size:0.9rem;letter-spacing:2px;">BOOGITY BOOGITY BOOGITY!</div>
+              <div style="color:var(--gray);font-size:0.8rem;margin-top:4px;">- Darrell Waltrip</div>
+            </div>
+          `;
+          // Redirect after DW audio finishes
+          setTimeout(function() {
+            window.location.href = '/?nosplash=1';
+          }, 11000);
+        } else {
+          // SHOW THE ERROR — never silently fail again
+          step3.innerHTML = `
+            <div class="confirm-card" style="border-color:var(--red);">
+              <div class="check">❌</div>
+              <div class="msg" style="color:var(--red);">PICK DIDN'T SAVE</div>
+              <div class="detail">
+                Something went wrong. Tap below to try again.
+              </div>
+              <button class="change-btn" onclick="Pick.changePick()" style="margin-top:16px;background:none;border:1px solid var(--red);color:var(--red);padding:10px 20px;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;">TRY AGAIN</button>
+            </div>
+          `;
+        }
       }
 
       function changePick() {
