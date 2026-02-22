@@ -694,12 +694,22 @@ const App = (() => {
     feedback.innerHTML = '<span class="spinner"></span> Saving...';
 
     try {
-      await db('POST', 'nascar_picks', 'on_conflict=player,race_id', {
+      // Get max ID first (sequence permissions may be broken)
+      let nextId = null;
+      try {
+        const maxRows = await db('GET', 'nascar_picks', 'select=id&order=id.desc&limit=1');
+        if (maxRows && maxRows.length > 0) nextId = maxRows[0].id + 1;
+      } catch (e) { /* fall through without id */ }
+
+      const pickData = {
         player,
         race_id: raceId,
         driver,
         driver_num: driverNum,
-      });
+      };
+      if (nextId) pickData.id = nextId;
+
+      await db('POST', 'nascar_picks', 'on_conflict=player,race_id', pickData);
 
       // Update local state
       const existing = picks.findIndex(p => p.player === player && p.raceId === raceId);
