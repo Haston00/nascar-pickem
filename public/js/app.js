@@ -355,6 +355,7 @@ const App = (() => {
       let seconds = 0;
       let thirds = 0;
       let bonuses = 0;
+      let tpPoints = 0;
 
       results.forEach(r => {
         if (!r.finishOrder || r.finishOrder.length === 0) return;
@@ -371,10 +372,13 @@ const App = (() => {
         // Bonus: +1 if their driver finished P1 in the actual race
         if (sorted[playerIdx].position === 1) { points += 1; bonuses++; }
 
-        // Toilet Paper Pick: +1 if their driver finished dead last in the actual race
+        // Toilet Paper Pick: +1 if their driver finished dead last among pickers
         const allPositions = r.finishOrder.map(f => f.position).filter(p => p != null && p !== 99);
         const lastPlace = Math.max(...allPositions);
-        if (sorted[playerIdx].position === lastPlace && lastPlace > 1) { points += 1; }
+        if (sorted[playerIdx].position === lastPlace && lastPlace > 1) {
+          points += 1;
+          tpPoints++;
+        }
       });
 
       // Win streak (consecutive 1st place among pickers)
@@ -390,7 +394,7 @@ const App = (() => {
         if (count >= 2) streak = `🔥 ${count}W`;
       }
 
-      return { player, points, firsts, seconds, thirds, bonuses, streak };
+      return { player, points, firsts, seconds, thirds, tpPoints, streak };
     });
 
     // Sort by points desc, then firsts desc, then respect display order for ties
@@ -412,7 +416,7 @@ const App = (() => {
           <td>${s.firsts}</td>
           <td>${s.seconds}</td>
           <td>${s.thirds}</td>
-          <td>${s.bonuses}</td>
+          <td>${s.tpPoints}</td>
           <td><span class="streak ${streakClass}">${s.streak || '--'}</span></td>
         </tr>
       `;
