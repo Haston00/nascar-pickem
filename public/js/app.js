@@ -84,6 +84,7 @@ const App = (() => {
       if (!results.find(r => r.raceId === pre.raceId)) {
         try {
           await db('POST', 'nascar_results', 'on_conflict=race_id', {
+            id: pre.raceId,
             race_id: pre.raceId,
             finish_order: [],
             winner: null,
@@ -796,8 +797,9 @@ const App = (() => {
       );
       const raceWinner = p1Vehicle?.driver?.full_name || null;
 
-      // Save to Supabase
+      // Save to Supabase (include id to bypass sequence permission issue)
       await db('POST', 'nascar_results', 'on_conflict=race_id', {
+        id: raceId,
         race_id: raceId,
         finish_order: finishOrder,
         winner,
